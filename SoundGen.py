@@ -5,7 +5,8 @@ import threading		#Multi-threading
 import time
 import array
 import sys
-
+import pandas as pd
+import pdata
 
 ########################################################################
 ### DECLARING VARIABLES
@@ -15,16 +16,27 @@ import sys
 sdr = RtlSdr()
 
 
-
 # configure SDR device
 sdr.sample_rate = 226e3
-sdr.center_freq = 95058882
-sdr.gain = 35
+sdr.center_freq = 90009978
+sdr.gain = 20
 global frame_size
 frame_size = 16 * 1024 # 32
 
 
-#private variables
+#signal characteristics
+
+signal_frequency = 3650
+bits_per_word = 32
+
+signal_period = 1/signal_frequency
+samples_per_bit = sdr.sample_rate * signal_period
+
+
+
+
+
+
 buffer_size = 0  # Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 n = 5
 last_n_frames = zeros(frame_size * n)
@@ -72,7 +84,7 @@ def collectData(): 	#Collect samples
 	global iteration_counter
 
 
-	while iteration_counter < 15:
+	while iteration_counter < 5:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		iteration_counter += 1
 		
@@ -112,7 +124,7 @@ if __name__ == "__main__":
 	t_collector.start()
 
 	
-	while iteration_counter < 15:
+	while iteration_counter < 5:
 		abs_samples = abs(samples)
 		
 		
@@ -121,15 +133,15 @@ if __name__ == "__main__":
 			last_n_frames[0:-1*(frame_size+1)] = last_n_frames[frame_size:-1]  	# Python supports negative indexing, which means '-1' corresponds to the last element of the array
 			this_frame = sample_buffer.get_nowait()								# '-2' to the second last, etc 
 			last_n_frames[-1*(frame_size+1):-1] = this_frame			
+					
 			
 			if debug == True:
 				allsamples.extend(this_frame)
 				
-
 			
-		line1.set_ydata(last_n_frames)
-		fig.canvas.draw()
-		fig.canvas.flush_events()
+		#line1.set_ydata(last_n_frames)
+		#fig.canvas.draw()
+		#fig.canvas.flush_events()
 		
 	
 	t_collector.join()
