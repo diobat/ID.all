@@ -34,9 +34,6 @@ samples_per_bit = sdr.sample_rate * signal_period
 
 
 
-
-
-
 buffer_size = 0  # Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 n = 5
 last_n_frames = zeros(frame_size * n)
