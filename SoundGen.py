@@ -18,7 +18,7 @@ sdr = RtlSdr()
 
 # configure SDR device
 sdr.sample_rate = 226e3
-sdr.center_freq = 90009978
+sdr.center_freq = 90010111
 sdr.gain = 20
 global frame_size
 frame_size = 16 * 1024 # 32
@@ -58,7 +58,7 @@ global ax1
 
 global iteration_counter
 iteration_counter = 0
-debug = True
+debug = False
 
 ## Debugging variables
 
@@ -78,17 +78,19 @@ def collectData(): 	#Collect samples
 	global samples
 	global frame_size
 	global data_ready
-	global iteration_counter
+	global iteration_counter, flag_end
 
-
-	while iteration_counter < 5:
+	while iteration_counter < 25:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		iteration_counter += 1
+	print("##############TERMINEI A RECOLHA DE AMOSTRAS##############")
+	flag_end = True
+	
 		
 	
 	
 def threadInit():
-	global t_collector, t_plotter
+	global t_collector, t_plotter, flag_end
 	t_collector = threading.Thread(target=collectData, name="Collector", args=[])
 	#print(str(threading.active_count()))
 	#t_plotter = threading.Thread(target=plotData, name="Plotter", args=[])
@@ -115,30 +117,25 @@ if __name__ == "__main__":
 	
 	ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
 	threadInit()  # Initialize the required threads.
-	plotInit() # Initialize the frames, axes, lines and other visual stuff
+	#plotInit() # Initialize the frames, axes, lines and other visual stuff
 	
 	
 	t_collector.start()
-
+	flag_end = False
 	
-	while iteration_counter < 5:
-		abs_samples = abs(samples)
+	while flag_end == False or sample_buffer.empty() == False:
 		
 		
 		if sample_buffer.empty() == False: # Are there any samples in the harvesting FIFO?
+			  
+			this_frame = sample_buffer.get_nowait()								
 			
-			last_n_frames[0:-1*(frame_size+1)] = last_n_frames[frame_size:-1]  	# Python supports negative indexing, which means '-1' corresponds to the last element of the array
-			this_frame = sample_buffer.get_nowait()								# '-2' to the second last, etc 
-			last_n_frames[-1*(frame_size+1):-1] = this_frame			
-					
+			demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size)
+			print(demod_signal)
+			
 			
 			if debug == True:
 				allsamples.extend(this_frame)
-				
-			
-		#line1.set_ydata(last_n_frames)
-		#fig.canvas.draw()
-		#fig.canvas.flush_events()
 		
 	
 	t_collector.join()
