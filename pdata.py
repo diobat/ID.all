@@ -1,6 +1,8 @@
 import pylab
 import numpy as np
 import pandas as pd
+import time
+
 
 
 #global last_n_frames, n, SPF
@@ -9,6 +11,8 @@ import pandas as pd
 
 
 def process_data(signal, samples_per_bit, samples_per_frame):
+	
+	t = time.time()
 	
 	#global last_n_frames
 
@@ -29,20 +33,29 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 		iavs = interval_average(sliced_signal[x], bit_frontier)
 		demodulated_signal = demodulator(iavs, threshold)
 		
+		#pylab.plot(sliced_signal[x], 'b')
+		#pylab.plot
+		
 		result.extend(demodulated_signal)
 		
-	
+	delta_t = time.time() -t
+	#print("process_data				" + str(delta_t))
 	return result
 	
 
 def variance(args,window):
 
-	result = []
-	window = int(window)
+	t = time.time()
 
+	result = []
+	#result = [None] * int(len(args)-window-1)
+	window = int(window)
+	y = range(int(len(args)-window-1))
+	step = 25
 	
-	for x in range(int(len(args)-window-1)):
-		result.append(np.var(args[x:x+window]))
+	#for x in range(int(len(args)-window-1)):
+	for x in y[0:-1:step]:
+		result.extend([np.var(args[x:x+window])] * step)
 	
 	result1 = [result[0]] * int(np.floor(window/2))
 	result2 = [result[-1]] * int(np.floor(window/2))
@@ -51,8 +64,10 @@ def variance(args,window):
 	result1.extend(result)
 	result1.extend(result2)
 	
-	print(len(result1))
+	#print(len(result1))
 	
+	delta_t = time.time() -t
+	print("variance			" + str(delta_t))
 	return result1
     
     
@@ -60,6 +75,7 @@ def variance(args,window):
     
 def enveloper(signal, SPF):
 	
+	t = time.time()
 	
 	#global last_n_frames 
 	
@@ -74,9 +90,14 @@ def enveloper(signal, SPF):
 	
 	envelope = [yupper, ylower]
 	
+	#print(time.time() -t)
+	delta_t = time.time() -t
+	#print("enveloper			" + str(delta_t))
 	return envelope
 
 def define_bitfrontiers(signal, samples_per_bit, threshold):
+	
+	t = time.time()
 	
 	rounded_samples = int(np.ceil(samples_per_bit))
 	quality = np.zeros(rounded_samples)
@@ -104,26 +125,31 @@ def define_bitfrontiers(signal, samples_per_bit, threshold):
 			
 		bit_frontiers[b] = offset_index + round(samples_per_bit*b)
 
-		
+	
+
+	delta_t = time.time() -t
+	#print("define_bitfrontiers		" + str(delta_t))
 	return bit_frontiers
 	
 	
 def define_wordfrontiers(signal, samples_per_bit):
 	
-	window = samples_per_bit * 10
+	t = time.time()
+	
+	window = round(samples_per_bit * 10)
 	
 	window_variance = variance(signal, window)
 	
 	
-	#stretched_variance = np.array(window_variance)*10
+	stretched_variance = np.array(window_variance)*10
+	
 	#pylab.plot(signal, 'b')
 	#pylab.plot(stretched_variance, 'r')
 	#pylab.show()
-
+	#input("Enter to continue")
 
 	#split = max(window_variance) * 0.5
 	split = np.percentile(window_variance, 0.5)
-	print(split)
 	word_map = (window_variance > split)
 	word_frontiers_map = np.bitwise_xor(word_map[0:-2], word_map[1:-1])
 	word_frontiers_map[0] = 1
@@ -136,6 +162,8 @@ def define_wordfrontiers(signal, samples_per_bit):
 	word_frontiers = np.ndarray.nonzero(word_frontiers_map)
 
 
+	print(nnz)
+
 	#pylab.plot(window_variance)
 	#pylab.show()
 	
@@ -143,9 +171,13 @@ def define_wordfrontiers(signal, samples_per_bit):
 	#print("Word_Frontiers")
 	#print(word_frontiers)
 	
+	delta_t = time.time() -t
+	#print("define_wordfrontiers		" + str(delta_t))
 	return word_frontiers
 	
 def slice_signal(signal, indexes):
+	
+	t = time.time()
 	
 	sliced_signal = []
 	
@@ -166,10 +198,15 @@ def slice_signal(signal, indexes):
 	#print("Sinal Fatiado ") 
 	#print(sliced_signal)
 	#print(indexes)
-		
+	
+	
+	delta_t = time.time() -t
+	#print("slice_signal			" + str(delta_t))
 	return result
 	
 def interval_average(signal, indexes):
+	
+	t = time.time()
 	
 	averages = np.zeros(max(len(indexes)-1, 0))
 	
@@ -178,9 +215,14 @@ def interval_average(signal, indexes):
 	for x in range(len(averages)):
 		averages[x] = np.mean(signal[indexes[x]:indexes[x+1]])
 		
+		
+	delta_t = time.time() -t
+	#print("interval_averages		" + str(delta_t))
 	return averages
 	
 def demodulator(iavs, threshold):
+
+	t = time.time()
 
 	result = np.asarray(iavs, dtype=int)
 	
@@ -189,6 +231,9 @@ def demodulator(iavs, threshold):
 	
 	result.tolist()
 	
+	
+	delta_t = time.time() - t
+	#print("demodulator			" + str(delta_t))
 	return result
 		
 	

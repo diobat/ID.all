@@ -7,6 +7,7 @@ import array
 import sys
 import pandas as pd
 import pdata
+#import scipy.signal
 
 ########################################################################
 ### DECLARING VARIABLES
@@ -18,7 +19,7 @@ sdr = RtlSdr()
 
 # configure SDR device
 sdr.sample_rate = 226e3
-sdr.center_freq = 90010111
+sdr.center_freq = 90010031
 sdr.gain = 20
 global frame_size
 frame_size = 16 * 1024 # 32
@@ -26,7 +27,8 @@ frame_size = 16 * 1024 # 32
 
 #signal characteristics
 
-signal_frequency = 3650
+decimation_factor = 1
+signal_frequency = 3650 * decimation_factor
 bits_per_word = 32
 
 signal_period = 1/signal_frequency
@@ -38,6 +40,7 @@ buffer_size = 0  # Size of the FIFO (in bits) where the samples are stored betwe
 n = 5
 last_n_frames = zeros(frame_size * n)
 
+desired_result = [1,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1,1,1,1]
 
 global sample_buffer
 sample_buffer = queue.Queue(buffer_size)
@@ -48,6 +51,7 @@ data_ready = 0
 
 global samples
 samples = zeros(frame_size)
+
 
 
 global fig1
@@ -82,6 +86,7 @@ def collectData(): 	#Collect samples
 
 	while iteration_counter < 25:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+		#sample_buffer.put_nowait(scipy.signal.decimate(abs(sdr.read_samples(frame_size))), 10)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		iteration_counter += 1
 	print("##############TERMINEI A RECOLHA DE AMOSTRAS##############")
 	flag_end = True
@@ -119,7 +124,7 @@ if __name__ == "__main__":
 	threadInit()  # Initialize the required threads.
 	#plotInit() # Initialize the frames, axes, lines and other visual stuff
 	
-	
+	end_result = []
 	t_collector.start()
 	flag_end = False
 	
@@ -132,15 +137,23 @@ if __name__ == "__main__":
 			
 			demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size)
 			print(demod_signal)
+			end_result.extend(demod_signal)
 			
 			
 			if debug == True:
 				allsamples.extend(this_frame)
-		
+	
+	sucesses = 0
+	
+	for x in range(len(end_result) - len(desired_result)):	
+		if end_result[x:x+len(desired_result)] == desired_result:
+			sucesses += 1
+			
+
 	
 	t_collector.join()
 	#time.sleep(1)
-	print("FINISHED   \nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(len(allsamples)))	
+	print("FINISHED   \nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(len(allsamples)) + "\nSucesses: " + str(sucesses))	
 	
 	if debug == True:
 		save('outfile', allsamples) 
