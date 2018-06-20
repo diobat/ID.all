@@ -17,7 +17,7 @@ import time
 
 sdr = RtlSdr()
 
-global frame_size, stop_at
+global frame_size
 
 # configure SDR device
 sdr.sample_rate = 226e3
@@ -28,44 +28,32 @@ frame_size = 16 * 1024 # 32
 
 #signal characteristics
 
-decimation_factor = 1
-signal_frequency = 3650 * decimation_factor
-bits_per_word = 32
+decimation_factor = 1 									# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
+signal_frequency = 3650 * decimation_factor				# Baseband frequency of the desired signal it should be no higher than half of the SDR kit sampling rate
+bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message
 
-signal_period = 1/signal_frequency
-samples_per_bit = sdr.sample_rate * signal_period
-
-stop_at = 25
+signal_period = 1/signal_frequency						
+samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR  kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
 
 
-buffer_size = 0  # Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 n = 5
-last_n_frames = zeros(frame_size * n)
+last_n_frames = zeros(frame_size * n)					# Important for plotting
 
+#This is the sequence of bits that the program will interpret as a "Success"
 desired_result = [1,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1,1,1,1]
 
+buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 global sample_buffer
 sample_buffer = queue.Queue(buffer_size)
 
 
-global data_ready
-data_ready = 0
-
-global samples
-samples = zeros(frame_size)
-
-
-
-global fig1
-global ax1
-
-
 ## Flow control
 
-global iteration_counter
-iteration_counter = 0
-debug = False
+global iteration_counter, stop_at
+iteration_counter = 0									# Counts the number of frames collected so far
+stop_at = 25											# How many frames of data the program will collect and process before it ends
+debug = False											# Debug capabilities switch
 
 ## Debugging variables
 
@@ -73,7 +61,7 @@ allsamples = array.array('f',[0])
 
 
 ########################################################################
-### DEFINING OBJECTS
+### FUNCTIONS
 ########################################################################
 
 def main(args):
@@ -82,13 +70,10 @@ def main(args):
 
 def collectData(): 	#Collect samples
 
-	global samples
 	global frame_size
-	global data_ready
 	global iteration_counter, flag_end, stop_at
 	
 	
-
 	t = time.time()
 	while iteration_counter < stop_at:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
@@ -96,8 +81,6 @@ def collectData(): 	#Collect samples
 		iteration_counter += 1
 	print("\n###TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 3)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 3)) + "###\n")
 	flag_end = True
-	
-		
 	
 	
 def threadInit():
@@ -123,11 +106,10 @@ def plotInit():
 	ax.set_ylim(0, 0.5)
 	
 
-
 if __name__ == "__main__":
 	
-	
 	t = time.time()
+	
 	#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
 	threadInit()  # Initialize the required threads.
 	#plotInit() # Initialize the frames, axes, lines and other visual stuff
