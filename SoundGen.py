@@ -7,6 +7,7 @@ import array
 import sys
 import pandas as pd
 import pdata
+import time
 #import scipy.signal
 
 ########################################################################
@@ -16,12 +17,12 @@ import pdata
 
 sdr = RtlSdr()
 
+global frame_size, stop_at
 
 # configure SDR device
 sdr.sample_rate = 226e3
 sdr.center_freq = 90010031
 sdr.gain = 20
-global frame_size
 frame_size = 16 * 1024 # 32
 
 
@@ -33,6 +34,8 @@ bits_per_word = 32
 
 signal_period = 1/signal_frequency
 samples_per_bit = sdr.sample_rate * signal_period
+
+stop_at = 25
 
 
 
@@ -82,13 +85,16 @@ def collectData(): 	#Collect samples
 	global samples
 	global frame_size
 	global data_ready
-	global iteration_counter, flag_end
+	global iteration_counter, flag_end, stop_at
+	
+	
 
-	while iteration_counter < 25:
+	t = time.time()
+	while iteration_counter < stop_at:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		#sample_buffer.put_nowait(scipy.signal.decimate(abs(sdr.read_samples(frame_size))), 10)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		iteration_counter += 1
-	print("##############TERMINEI A RECOLHA DE AMOSTRAS##############")
+	print("\n###TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 3)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 3)) + "###\n")
 	flag_end = True
 	
 		
@@ -120,7 +126,9 @@ def plotInit():
 
 if __name__ == "__main__":
 	
-	ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
+	
+	t = time.time()
+	#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
 	threadInit()  # Initialize the required threads.
 	#plotInit() # Initialize the frames, axes, lines and other visual stuff
 	
@@ -136,7 +144,7 @@ if __name__ == "__main__":
 			this_frame = sample_buffer.get_nowait()								
 			
 			demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size)
-			print(demod_signal)
+			#print(demod_signal)
 			end_result.extend(demod_signal)
 			
 			
@@ -153,7 +161,7 @@ if __name__ == "__main__":
 	
 	t_collector.join()
 	#time.sleep(1)
-	print("FINISHED   \nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(len(allsamples)) + "\nSucesses: " + str(sucesses))	
+	print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nSucesses: " + str(sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
 	
 	if debug == True:
 		save('outfile', allsamples) 
