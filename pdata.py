@@ -130,7 +130,7 @@ def define_bitfrontiers(signal, samples_per_bit, threshold):
 	quality = np.zeros(rounded_samples)
 	number_of_bits = int(np.floor((len(signal)/samples_per_bit)))
 	range_number_of_bits = range(number_of_bits - 1)
-	step = int(samples_per_bit/8)
+	step = int(samples_per_bit/16)
 	
 	for i in range(rounded_samples):
 		

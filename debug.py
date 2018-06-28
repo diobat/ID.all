@@ -22,6 +22,9 @@ if __name__ == '__main__':
 			demod_signal[c] = end_result[x]
 		counter += 1
 			
+	#allsamples = allsamples[2000:-1]
+	#demod_signal = demod_signal[2000:-1]
+			
 	pylab.ioff()
 	x = pylab.arange(len(allsamples))
 	pylab.subplot(211)
@@ -31,5 +34,5 @@ if __name__ == '__main__':
 	
 	
 	pylab.show()
-        
+	
 	sys.exit(main(sys.argv))

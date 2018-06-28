@@ -21,9 +21,10 @@ global frame_size
 
 # configure SDR device
 sdr.sample_rate = 226e3
-sdr.center_freq = 90010100
-sdr.gain = 14
-frame_size = 16 * 1024 # 32
+sdr.center_freq = 90010000
+sdr.gain = 12
+
+frame_size = 16 * 1024 * 2# 32
 
 
 #signal characteristics
@@ -40,8 +41,9 @@ samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of 
 n = 5
 last_n_frames = zeros(frame_size * n)					# Important for plotting
 
-#This is the sequence of bits that the program will interpret as a "Success"
-desired_result = [1,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1,1,1,1]
+
+desired_result = [1,0,1,0,0,0,1,0,0,0,1,0,1,1]			#This is the sequence of bits that the program will interpret as a "Success"
+preamble = [0,0,0,0,1,0,1,0]							#This is the sequence of bits that the program will interpret as the start of a packet
 
 buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 global sample_buffer
@@ -52,7 +54,7 @@ sample_buffer = queue.Queue(buffer_size)
 
 global iteration_counter, stop_at
 iteration_counter = 0									# Counts the number of frames collected so far
-stop_at = 10											# How many frames of data the program will collect and process before it ends
+stop_at = 5												# How many frames of data the program will collect and process before it ends
 debug = True											# Debug capabilities switch
 
 ## Debugging variables
@@ -131,17 +133,29 @@ if __name__ == "__main__":
 			if debug == True:
 				allsamples.extend(this_frame)
 	
+	flipped_endresult = [1 - x for x in end_result]
+	
 	sucesses = 0
+	flipped_sucesses = 0
+	preamble_detections = 0
 	
 	for x in range(len(end_result) - len(desired_result)):	
 		if end_result[x:x+len(desired_result)] == desired_result:
 			sucesses += 1
 			
+	for x in range(len(flipped_endresult) - len(desired_result)):	
+		if flipped_endresult[x:x+len(desired_result)] == desired_result:
+			flipped_sucesses += 1
+			
+	for x in range(len(end_result) - len(preamble)):	
+		if end_result[x:x+len(preamble)] == preamble:
+			preamble_detections += 1
+	
 	print(end_result)
 	
 	t_collector.join()
 	#time.sleep(1)
-	print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nSucesses: " + str(sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
+	print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
 	
 	if debug == True:
 		save('outfile_samples', allsamples) 
