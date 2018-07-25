@@ -1,5 +1,11 @@
-from pylab import *   	#Graphical capabilities
-from rtlsdr import *	#SDR
+#### If any issues arise, try :
+
+	# First time setup? Issues with SDR kit compatibility? Check:  https://gist.github.com/floehopper/99a0c8931f9d779b0998
+	
+	# Issues with numpy module? On terminal: pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
+
+from pylab import *   	#Graphical capabilities   -->  pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
+from rtlsdr import *	#SDR 
 import queue			#FIFO/queue
 import threading		#Multi-threading
 import time
@@ -8,6 +14,7 @@ import sys
 import pandas as pd
 import pdata
 import time
+import RPi.GPIO as GPIO	#LED's
 #import scipy.signal
 
 ########################################################################
@@ -21,8 +28,8 @@ global frame_size
 
 # configure SDR device
 sdr.sample_rate = 226e3
-sdr.center_freq = 90010000
-sdr.gain = 12
+sdr.center_freq = 93003600
+sdr.gain = 15
 
 frame_size = 16 * 1024 * 2# 32
 
@@ -38,7 +45,7 @@ samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of 
 
 
 
-n = 5
+n = 2
 last_n_frames = zeros(frame_size * n)					# Important for plotting
 
 
@@ -54,8 +61,13 @@ sample_buffer = queue.Queue(buffer_size)
 
 global iteration_counter, stop_at
 iteration_counter = 0									# Counts the number of frames collected so far
-stop_at = 5												# How many frames of data the program will collect and process before it ends
-debug = True											# Debug capabilities switch
+stop_at = 2												# How many frames of data the program will collect and process before it ends
+debug = False											# Debug capabilities switch
+
+## Led Setup 
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(3, GPIO.OUT)
 
 ## Debugging variables
 
@@ -74,7 +86,7 @@ def collectData(): 	#Collect samples
 
 	global frame_size
 	global iteration_counter, flag_end, stop_at
-	
+	iteration_counter = 0	
 	t = time.time()
 	while iteration_counter < stop_at:
 		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
@@ -108,59 +120,66 @@ def plotInit():
 
 if __name__ == "__main__":
 	
-	t = time.time()
+	while True:
 	
-	#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
-	threadInit()  # Initialize the required threads.
-	#plotInit() # Initialize the frames, axes, lines and other visual stuff
-	
-	end_result = []
-	t_collector.start()
-	flag_end = False
-	
-	while flag_end == False or sample_buffer.empty() == False:
+		t = time.time()
 		
+		#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
+		threadInit()  # Initialize the required threads.
+		#plotInit() # Initialize the frames, axes, lines and other visual stuff
 		
-		if sample_buffer.empty() == False: # Are there any samples in the harvesting FIFO?
-			  
-			this_frame = sample_buffer.get_nowait()								
-			
-			demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# O sinal cru é desmodulado (ASK) através das funções da biblioteca pdata
-			#print(demod_signal)
-			end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
+		end_result = []
+		t_collector.start()
+		flag_end = False
+		
+		while flag_end == False or sample_buffer.empty() == False:
 			
 			
-			if debug == True:
-				allsamples.extend(this_frame)
-	
-	flipped_endresult = [1 - x for x in end_result]
-	
-	sucesses = 0
-	flipped_sucesses = 0
-	preamble_detections = 0
-	
-	for x in range(len(end_result) - len(desired_result)):	
-		if end_result[x:x+len(desired_result)] == desired_result:
-			sucesses += 1
+			if sample_buffer.empty() == False: # Are there any samples in the harvesting FIFO?
+				  
+				this_frame = sample_buffer.get_nowait()								
+				
+				demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# O sinal cru é desmodulado (ASK) através das funções da biblioteca pdata
+				#print(demod_signal)
+				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
+				
+				
+				if debug == True:
+					allsamples.extend(this_frame)
+		
+		flipped_endresult = [1 - x for x in end_result]
+		
+		sucesses = 0
+		flipped_sucesses = 0
+		preamble_detections = 0
+		
+		for x in range(len(end_result) - len(desired_result)):	
+			if end_result[x:x+len(desired_result)] == desired_result:
+				sucesses += 1
+				
+		for x in range(len(flipped_endresult) - len(desired_result)):	
+			if flipped_endresult[x:x+len(desired_result)] == desired_result:
+				flipped_sucesses += 1
+				
+		for x in range(len(end_result) - len(preamble)):	
+			if end_result[x:x+len(preamble)] == preamble:
+				preamble_detections += 1
+		
+		if sucesses > 5 or flipped_sucesses > 5:
+			GPIO.output(3, True)
+		else:
+			GPIO.output(3, False)
 			
-	for x in range(len(flipped_endresult) - len(desired_result)):	
-		if flipped_endresult[x:x+len(desired_result)] == desired_result:
-			flipped_sucesses += 1
-			
-	for x in range(len(end_result) - len(preamble)):	
-		if end_result[x:x+len(preamble)] == preamble:
-			preamble_detections += 1
-	
-	print(end_result)
-	
-	t_collector.join()
-	#time.sleep(1)
-	print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
-	
-	if debug == True:
-		save('outfile_samples', allsamples) 
-		save('outfile_signal', end_result)
-		save('outfile_SPB', samples_per_bit)
+		print(end_result)
+		
+		t_collector.join()
+		#time.sleep(1)
+		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
+		
+		if debug == True:
+			save('outfile_samples', allsamples) 
+			save('outfile_signal', end_result)
+			save('outfile_SPB', samples_per_bit)
 		
 	sys.exit(main(sys.argv))
 
