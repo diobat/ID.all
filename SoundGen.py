@@ -1,3 +1,5 @@
+### Made by Diogo Batista (diogobatista@ua.pt) as part of my Integrated Master's thesis
+
 #### If any issues arise, try :
 
 	# First time setup? Issues with SDR kit compatibility? Check:  https://gist.github.com/floehopper/99a0c8931f9d779b0998
@@ -8,30 +10,51 @@ from pylab import *   	#Graphical capabilities   -->  pip3 install --upgrade --i
 from rtlsdr import *	#SDR 
 import queue			#FIFO/queue
 import threading		#Multi-threading
-import time
 import array
 import sys
-import pandas as pd
-import pdata
-import time
+import pdata			#demodulating library
+import time				#timestamps
 import RPi.GPIO as GPIO	#LED's
+import argparse			#argumment management
 #import scipy.signal
 
 ########################################################################
-### DECLARING VARIABLES
+### PARSING INPUT ARGUMENTS
 ########################################################################
 
+parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo Batista, diogobatista@ua.pt', epilog=' ',)
 
-sdr = RtlSdr()
+parser.add_argument('-f','--freq', help='Center Frequency', required=True)
+parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
+parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
+parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 32*1024)
+parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
+parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, default = False)
+parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
+args = vars(parser.parse_args())
 
-global frame_size
+#args['freq'] will contain the value of arg '-f'
+#args['samp'] will contain the value of optional argument '-s' if any value was passed
+#etc
+
+
+
+########################################################################
+### DECLARING VARIABLES
+########################################################################							
+
+
+# Initialize SDR kit
+sdr = RtlSdr()	
 
 # configure SDR device
-sdr.sample_rate = 226e3
-sdr.center_freq = 93003600
-sdr.gain = 15
+sdr.sample_rate = args['samp']									#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+sdr.center_freq = args['freq']
+sdr.gain = args['gain']
 
-frame_size = 16 * 1024 * 2# 32
+
+global frame_size
+frame_size = args['sfram']
 
 
 #signal characteristics
@@ -41,7 +64,7 @@ signal_frequency = 3650 * decimation_factor				# Baseband frequency of the desir
 bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message
 
 signal_period = 1/signal_frequency						
-samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR  kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
+samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
 
 
@@ -59,15 +82,26 @@ sample_buffer = queue.Queue(buffer_size)
 
 ## Flow control
 
-global iteration_counter, stop_at
+global iteration_counter, stop_at, debug
 iteration_counter = 0									# Counts the number of frames collected so far
-stop_at = 2												# How many frames of data the program will collect and process before it ends
-debug = False											# Debug capabilities switch
+stop_at = args['nfram']									# How many frames of data the program will collect and process before it ends
+infinite_loop = True							# Flag that controls wether the program will leave the main loop
+debug = args['dbug']									# Debug capabilities switch
 
 ## Led Setup 
 
+USE_LEDS = True
+heartbeat = True
+max_packages = stop_at * 10;
+
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(3, GPIO.OUT)
+GPIO.setup(5, GPIO.OUT)
+GPIO.setup(7, GPIO.OUT)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(13, GPIO.OUT)
+
 
 ## Debugging variables
 
@@ -80,7 +114,26 @@ allsamples = array.array('f',[0])
 
 def main(args):
     return 0
+    
+def setFrequency(f):
+	sdr.center_freq = f
+	
+def setSampleRate(sr):
+	sdr.sample_rate = sr
+	
+def setGain(g):
+	sdr.gain = g
 
+def setFrameSize(fs):
+	frame_size = fs
+	
+def setNumberofFrames(nof):
+	stop_at = nof
+	
+def setDebugMode(d):
+	global debug
+	debug = d
+	
 
 def collectData(): 	#Collect samples
 
@@ -95,7 +148,7 @@ def collectData(): 	#Collect samples
 	flag_end = True
 	
 	
-def threadInit():
+def threadInit():	#Initialize threads
 	global t_collector, t_plotter, flag_end
 	t_collector = threading.Thread(target=collectData, name="Collector", args=[])
 	#print(str(threading.active_count()))
@@ -120,8 +173,10 @@ def plotInit():
 
 if __name__ == "__main__":
 	
-	while True:
 	
+	
+	while infinite_loop == True:
+			
 		t = time.time()
 		
 		#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
@@ -164,22 +219,76 @@ if __name__ == "__main__":
 		for x in range(len(end_result) - len(preamble)):	
 			if end_result[x:x+len(preamble)] == preamble:
 				preamble_detections += 1
+				
+
 		
-		if sucesses > 5 or flipped_sucesses > 5:
-			GPIO.output(3, True)
-		else:
-			GPIO.output(3, False)
+		if USE_LEDS == True:		
+			
+			max_sucesses = max(sucesses, flipped_sucesses)
+			success_ratio = max_sucesses/max_packages
+			
+			heartbeat = not heartbeat
+			GPIO.output(13, heartbeat)
+			
+			
+
+			if success_ratio >= 0 and success_ratio < 0.25:
+				
+				GPIO.output(3, False)
+				GPIO.output(5, False)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+				
+			elif success_ratio >= 0.25 and success_ratio < 0.5:
+				
+				GPIO.output(3, True)
+				GPIO.output(5, False)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+				
+			elif success_ratio >= 0.5 and success_ratio < 0.75:
+				
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+				
+			elif success_ratio >= 0.75 and success_ratio < 0.9:
+
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, False)
+
+			elif success_ratio >= 0.9 and success_ratio <= 1:				
+		
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, True)
+				
+			else:
+				
+				GPIO.output(3, False)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, False)
+
+				
+			
 			
 		print(end_result)
 		
 		t_collector.join()
 		#time.sleep(1)
-		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
+		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
 		
 		if debug == True:
 			save('outfile_samples', allsamples) 
 			save('outfile_signal', end_result)
 			save('outfile_SPB', samples_per_bit)
+			
+		infinite_loop = args['infi'] 			# Update the flow control variable to match the user argument
 		
 	sys.exit(main(sys.argv))
 
