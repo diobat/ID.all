@@ -6,10 +6,12 @@
 	
 	# Issues with numpy module? On terminal: pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
 
-from pylab import *   	#Graphical capabilities   -->  pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
+from pylab import *   	#Graphical capabilities, network and debug outfiles  
 from rtlsdr import *	#SDR 
 import queue			#FIFO/queue
 import threading		#Multi-threading
+import datetime			#timestamps for the outfiles
+import os				#file management
 import array
 import sys
 import pdata			#demodulating library
@@ -29,7 +31,7 @@ parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
 parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 32*1024)
 parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
-parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, default = False)
+parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
 parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
 args = vars(parser.parse_args())
 
@@ -37,7 +39,7 @@ args = vars(parser.parse_args())
 #args['samp'] will contain the value of optional argument '-s' if any value was passed
 #etc
 
-
+print(args)
 
 ########################################################################
 ### DECLARING VARIABLES
@@ -48,7 +50,7 @@ args = vars(parser.parse_args())
 sdr = RtlSdr()	
 
 # configure SDR device
-sdr.sample_rate = args['samp']									#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+sdr.sample_rate = args['samp']							#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
 sdr.center_freq = args['freq']
 sdr.gain = args['gain']
 
@@ -66,14 +68,17 @@ bits_per_word = 32										# How many bits of information will be arriving in b
 signal_period = 1/signal_frequency						
 samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
-
-
 n = 2
 last_n_frames = zeros(frame_size * n)					# Important for plotting
 
+desired_result = [1,0,1,0,0,0,1,0,0,0,1,0,1,1]			# This is the sequence of bits that the program will interpret as a "Success"
+preamble = [1,0,1,0]									# This is the sequence of bits that the program will interpret as the start of a packet
 
-desired_result = [1,0,1,0,0,0,1,0,0,0,1,0,1,1]			#This is the sequence of bits that the program will interpret as a "Success"
-preamble = [0,0,0,0,1,0,1,0]							#This is the sequence of bits that the program will interpret as the start of a packet
+info_size = 8											# The information part of the packet consists of 2 hexadecimal chars, 8 bits
+packet_size = len(preamble) + info_size + 2				# Parity + 2 hexa chars + parity bit + stop bit
+
+message_result = []										# Reserving space for the message to be extracted from received frames						
+oufile_number = 0										#
 
 buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 global sample_buffer
@@ -85,7 +90,7 @@ sample_buffer = queue.Queue(buffer_size)
 global iteration_counter, stop_at, debug
 iteration_counter = 0									# Counts the number of frames collected so far
 stop_at = args['nfram']									# How many frames of data the program will collect and process before it ends
-infinite_loop = True							# Flag that controls wether the program will leave the main loop
+infinite_loop = True									# Flag that controls wether the program will leave the main loop
 debug = args['dbug']									# Debug capabilities switch
 
 ## Led Setup 
@@ -115,25 +120,18 @@ allsamples = array.array('f',[0])
 def main(args):
     return 0
     
-def setFrequency(f):
-	sdr.center_freq = f
+def parityOf(int_type): # Check parity
 	
-def setSampleRate(sr):
-	sdr.sample_rate = sr
+	x = 0
+	for bit in int_type:
+		x = (x << 1) | bit
 	
-def setGain(g):
-	sdr.gain = g
+	parity = False
+	while (x):
+		parity = ~parity
+		x = x & (x - 1)
+	return(parity)
 
-def setFrameSize(fs):
-	frame_size = fs
-	
-def setNumberofFrames(nof):
-	stop_at = nof
-	
-def setDebugMode(d):
-	global debug
-	debug = d
-	
 
 def collectData(): 	#Collect samples
 
@@ -208,6 +206,8 @@ if __name__ == "__main__":
 		flipped_sucesses = 0
 		preamble_detections = 0
 		
+		# Count the number of sucesses
+		
 		for x in range(len(end_result) - len(desired_result)):	
 			if end_result[x:x+len(desired_result)] == desired_result:
 				sucesses += 1
@@ -216,10 +216,21 @@ if __name__ == "__main__":
 			if flipped_endresult[x:x+len(desired_result)] == desired_result:
 				flipped_sucesses += 1
 				
-		for x in range(len(end_result) - len(preamble)):	
+		message_result = []
+				
+		for x in range(len(end_result) - len(preamble)):				#Detects preambles
 			if end_result[x:x+len(preamble)] == preamble:
 				preamble_detections += 1
+				if parityOf(end_result[x:x+packet_size-1]):
+					message_result.append(end_result[x+len(preamble)-1:x+len(preamble)+info_size-1])
 				
+		output_list = os.listdir("./outputs")
+
+		if len(output_list) >= 5:
+			os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
+		
+		save('./outputs/' + str(datetime.datetime.now()), message_result)
+		
 
 		
 		if USE_LEDS == True:		
@@ -273,15 +284,20 @@ if __name__ == "__main__":
 				GPIO.output(5, True)
 				GPIO.output(7, True)
 				GPIO.output(11, False)
-
 				
-			
+				
 			
 		print(end_result)
 		
 		t_collector.join()
 		#time.sleep(1)
+		
 		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )	
+		
+		print('Debug value is ' + str(debug))
+		print('Loop value is ' + str(args['infi']))
+		
+		
 		
 		if debug == True:
 			save('outfile_samples', allsamples) 
