@@ -6,7 +6,7 @@ import numpy as np
 
 
 sample_rate = 226e3
-frame_size = 16 * 1024 # 32
+frame_size = 32*1024
 signal_frequency = 3650
 bits_per_word = 32
 signal_period = 1/signal_frequency
@@ -25,7 +25,7 @@ samples_per_bit = sample_rate * signal_period
 
 
 
-allsamples = pylab.load('outfile.npy')
+allsamples = pylab.load('outfile_samples.npy')
 print("Sample Size: " + str(len(allsamples)))
 
 allsamples = allsamples[10000:-1]

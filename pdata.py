@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = False  	# 1 para gerar graficos, 0 para nao o fazer
+debug = False 	# 1 para gerar graficos, 0 para nao o fazer
 debug1 = False 	# Idem aspas para timestamps especificos a cada função
 debug2 = False	# timestamp global 
 
@@ -26,11 +26,13 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	
 	envelope = []
 	envelope = enveloper(signal, SPF)
+	#threshold = abs(envelope[1] - envelope[0]) * 0.50 + envelope[1]
 	threshold = np.mean(envelope)
 	result = []
 	
 	allbit_frontier = []
 	alliavs = []
+	extended_alliavs = []
 	alldemodulated_signal = []
 	counter = 0
 	
@@ -46,17 +48,26 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 		if debug == True:
 			allbit_frontier.extend([x+counter for x in bit_frontier])
 			alliavs.extend(iavs)
+
 			counter += len(sliced_signal[x])
+
+	for x in range(len(alliavs)):
+		a = [alliavs[x]] * round(samples_per_bit)
+		extended_alliavs.extend(a)
 		
 	if debug == True:	
 		pylab.plot(signal, 'b')
+		pylab.plot(extended_alliavs, 'red')
 		
-		for xv in word_frontiers[0]:
-			plt.axvline(x=xv, color='red')
+		#for xv in word_frontiers[0]:
+			#plt.axvline(x=xv, color='red')
 		
 		for xc in allbit_frontier:
 			plt.axvline(x=xc)
+			
+		plt.axhline(y=threshold, color ='k')
 
+		
 	
 		pylab.show()
 		input("Press space to continue")
@@ -110,8 +121,8 @@ def enveloper(signal, SPF):
 	#first_non_zero = I[0][0]
 	
 	
-	yupper = np.percentile(signal, 90)
-	ylower = np.percentile(signal, 10)
+	yupper = np.percentile(signal, 97)
+	ylower = np.percentile(signal, 3)
 	
 	envelope = [yupper, ylower]
 	
@@ -130,7 +141,8 @@ def define_bitfrontiers(signal, samples_per_bit, threshold):
 	quality = np.zeros(rounded_samples)
 	number_of_bits = int(np.floor((len(signal)/samples_per_bit)))
 	range_number_of_bits = range(number_of_bits - 1)
-	step = int(samples_per_bit/16)
+	step = 2
+	#step = int(samples_per_bit/32)
 	
 	for i in range(rounded_samples):
 		
@@ -191,20 +203,20 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 
 	
-	#if debug == True:
-		#print(word_map)
-		#print(word_frontiers_map)
-		#print("Word Frontiers: " + str(word_frontiers[0]))
-		#print(nnz)
+	if debug == True:
+		print(word_map)
+		print(word_frontiers_map)
+		print("Word Frontiers: " + str(word_frontiers[0]))
+		print(nnz)
 		
-		#pylab.plot(signal, 'b')
-		#pylab.plot(window_variance, 'r')
-		#print("Valor do split: " + str(split))
-		#plt.axhline(y = split, color='black')
+		pylab.plot(signal, 'b')
+		pylab.plot(window_variance, 'r')
+		print("Valor do split: " + str(split))
+		plt.axhline(y = split, color='black')
 		
-		#pylab.show()
+		pylab.show()
 		
-		#input("carrega para seguir")
+		input("carrega para seguir")
 
 	if debug1 == True:
 		delta_t = time.time() -t
@@ -253,7 +265,10 @@ def interval_average(signal, indexes):
 	#print(indexes)
 	
 	for x in range(len(averages)):
-		averages[x] = np.mean(signal[indexes[x]:indexes[x+1]])
+		tempbuffer = signal[indexes[x]:indexes[x+1]]
+		averages[x] = np.mean(tempbuffer[round(len(tempbuffer)*0.3):round(len(tempbuffer)*0.9)])
+		
+		#averages[x] = np.mean(signal[indexes[x]:indexes[x+1]])
 		
 		
 	if debug1 == True:
@@ -273,6 +288,11 @@ def demodulator(iavs, threshold):
 	result[iavs < threshold] = 0
 	
 	result.tolist()
+	
+	#if debug == True:
+		#pylab.plot(iavs, 'red')
+		#pylab.plot(threshold, 'black')
+		#pylab.show()
 	
 	if debug1 == True:
 		delta_t = time.time() - t
