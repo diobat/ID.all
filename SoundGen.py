@@ -26,7 +26,7 @@ import argparse			#argumment management
 
 parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo Batista, diogobatista@ua.pt', epilog=' ',)
 
-parser.add_argument('-f','--freq', help='Center Frequency', required=True)
+parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=True)
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
 parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 32*1024)
@@ -50,8 +50,9 @@ print(args)
 sdr = RtlSdr()	
 
 # configure SDR device
-sdr.sample_rate = args['samp']							#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+sdr.sample_rate = int(args['samp'])						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
 sdr.center_freq = args['freq']
+#sdr.gain = 'auto'
 sdr.gain = args['gain']
 
 
@@ -140,7 +141,7 @@ def collectData(): 	#Collect samples
 	iteration_counter = 0	
 	t = time.time()
 	while iteration_counter < stop_at:
-		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size)))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 		iteration_counter += 1
 	print("\n###TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 3)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 3)) + "###\n")
 	flag_end = True
