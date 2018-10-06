@@ -20,11 +20,4 @@ Indices and tables
 * :ref:`search`
 
 
-SoundGen is a flexible ASK signal demodulator, created with DVB-T in mind.
-This software couples an easy setup, takes advantage of the flexible tuning mechanism included in the SDR kit and includes the possibility of network integration.
-
-
-python3 SoundGen.py -f 95000000 
-
-
 Testing this new line
