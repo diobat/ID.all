@@ -49,103 +49,222 @@
 <h1>What is SoundGen:<a class="headerlink" href="#what-is-soundgen" title="Permalink to this headline">¶</a></h1>
 <div class="line-block">
 <div class="line">SoundGen is a flexible burst mode ASK signal demodulator and frame processer, created with DVB-T in mind.</div>
+<div class="line"><br /></div>
 <div class="line">This software couples an easy setup with the advantage of the flexible tuning mechanism included in the SDR kit. It includes the possibility of network integration.</div>
-<div class="line">The script has been tested only for scenarios where an emitter is transmitting ASK encoded frames in bursts, spaced by periods of silence. It is very unlikely successful demodulations will occur in any other scenario.</div>
+<div class="line">The script has been tested only for scenarios where an emitter is transmitting ASK encoded frames in bursts, spaced by periods of silence, with constant distinct RF power levels for different symbols. It is very unlikely successful demodulations will occur in any other scenario.</div>
+<div class="line">This user guide is oriented towards the final user, if you are a developer who wishes to contribute please read the master thesis associated with this project. Furthermore, all the details in this document assume you have a working with a clone of the master SD card.</div>
 </div>
 <p>Example:</p>
 <p>Demodulating a signal with a 5kHz symbol rate riding on a 95MHz carrier wave is as simple as:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">f</span> <span class="mi">95000000</span> <span class="o">-</span><span class="n">sym</span> <span class="mi">5000</span>
 </pre></div>
 </div>
-<p>The repository can be found at <a class="reference external" href="https://github.com/Espigao25/SoundGen_Python3">https://github.com/Espigao25/SoundGen_Python3</a></p>
-</div>
-<div class="section" id="how-to-install">
-<h1>How to install:<a class="headerlink" href="#how-to-install" title="Permalink to this headline">¶</a></h1>
+<p>The code repository can be found <a class="reference external" href="https://github.com/Espigao25/SoundGen_Python3">here</a> .</p>
+<div class="section" id="how-to-setup">
+<h2>How to setup:<a class="headerlink" href="#how-to-setup" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li>First of all, install all the dependencies. This step is not necessary if you have been provided with a cloned microSD card.</li>
+<li>First of all, install all the dependencies. This step is only necessary if you have not been provided with a cloned microSD card.</li>
 </ol>
-<div class="line-block">
-<div class="line">PyLab</div>
-<div class="line">RtlSdr</div>
-<div class="line">argparse</div>
-<div class="line">numpy</div>
-<div class="line">matplotlib</div>
-</div>
+<blockquote>
+<div><ul class="simple">
+<li>PyLab</li>
+<li>RtlSdr</li>
+<li>argparse</li>
+<li>numpy</li>
+<li>matplotlib</li>
+</ul>
+</div></blockquote>
 <ol class="arabic simple" start="2">
-<li>Connect the receiver/SDR kit to your platform via USB, run rtl_test on the command line to check if the kit was properly detected. Remember to use an adequate antenna to the carrier wave you intend to sniff.</li>
-<li>“python3 SoundGen.py -h” on the terminal will give you a list of all the arguments you can pass into the script. They are:</li>
+<li>Connect the receiver/SDR kit to your chosen platform via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.</li>
 </ol>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Run rtl_test on the command line to check if the kit was properly detected and if no warnings or errors were returned.</div>
+</div>
+</div></blockquote>
+<p>3. Make sure you are on the project’s root folder. It should be located at “”$/SoundGen_Python/SoundGen_Python/”.
+|</p>
+<p>4. You are good to go! :)
+|</p>
+</div>
+<div class="section" id="how-to-use">
+<h2>How to use:<a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<p>“python3 SoundGen.py -h” on the terminal will give you a list of all the arguments you can pass into the script. They are:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="17%" />
-<col width="83%" />
+<col width="13%" />
+<col width="79%" />
+<col width="8%" />
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td>Argument name</td>
 <td>Argument description</td>
+<td>type</td>
 </tr>
-<tr class="row-even"><td>-f</td>
+<tr class="row-even"><td>-f *</td>
 <td>Center frequency tuning, should equal the freq of your carrier wave</td>
+<td>int</td>
 </tr>
-<tr class="row-odd"><td>-samp</td>
-<td>Sampling rate</td>
-</tr>
-<tr class="row-even"><td>-sym</td>
+<tr class="row-odd"><td>-sym *</td>
 <td>Symbol rate</td>
+<td>int</td>
+</tr>
+<tr class="row-even"><td>-samp</td>
+<td>Sampling rat. Default is 250kHz</td>
+<td>int</td>
 </tr>
 <tr class="row-odd"><td>-sf</td>
-<td>Frame size in samples</td>
+<td>Frame size in samples. Default is 32 768</td>
+<td>int</td>
 </tr>
 <tr class="row-even"><td>-nf</td>
-<td>Number of frames to process before exiting (unless inf mode is enabled)</td>
+<td>Number of frames to process before exiting (unless inf mode is enabled). Default is 5.</td>
+<td>int</td>
 </tr>
 <tr class="row-odd"><td>-gain</td>
-<td>Software gain, must belong to interval [0 50]</td>
+<td>Software gain, must belong to interval [0 50]. Default is 15.</td>
+<td>int</td>
 </tr>
 <tr class="row-even"><td>-i</td>
-<td>Infinite mode, runs the program indefinitely if True</td>
+<td>Infinite mode, runs the program indefinitely if True. Default is False.</td>
+<td>bool</td>
 </tr>
 <tr class="row-odd"><td>-db</td>
-<td>Debug mode, dumps debugging info into three distinct outfiles</td>
+<td>Debug mode, dumps debugging info into three distinct outfiles. Default is False .</td>
+<td>bool</td>
+</tr>
+<tr class="row-even"><td>-h</td>
+<td>Ignore all other arguments, print this table and exit.</td>
+<td>None</td>
 </tr>
 </tbody>
 </table>
+<p>Proper format is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">...</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For example, in order to capture a signal with a 10k symbol rate on a 868MHz carrier wave, with debugging mode on and a gain of 10dB I would type into the terminal:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">f</span> <span class="mi">868000000</span> <span class="o">-</span><span class="n">sym</span> <span class="mi">10000</span> <span class="o">-</span><span class="n">db</span> <span class="kc">True</span> <span class="o">-</span><span class="n">g</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="demodulation">
-<h1>Demodulation<a class="headerlink" href="#demodulation" title="Permalink to this headline">¶</a></h1>
-<p>Simply providing the program with</p>
+<h2>Demodulation<a class="headerlink" href="#demodulation" title="Permalink to this headline">¶</a></h2>
+<p>Simply providing the program with a tuning frequency and a symbol rate will always return a string of bit, even in cases when there is nothing but background noise at the specified frequency.
+The output comes in two forms:</p>
+<p>1.A real time print into the terminal instance the program is being run on.</p>
+<p>2.A file dump of the entire signal demodulated during the total runtime of the program (see Debugging Mode for details).</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="frame-processing">
-<h1>Frame processing<a class="headerlink" href="#frame-processing" title="Permalink to this headline">¶</a></h1>
-<p>Not only will this package demodulate ASK frames, it will also process them according to the following protocol.
-PREAMBLE + DATA + PARITY + STOP BIT</p>
+<h2>Frame processing<a class="headerlink" href="#frame-processing" title="Permalink to this headline">¶</a></h2>
+<p>Not only will this package demodulate ASK frames, it will also process them according to the following packet protocol.</p>
+<div class="line-block">
+<div class="line">PREAMBLE + DATA + PARITY + STOP BIT</div>
+</div>
+<div class="line-block">
+<div class="line">Every time a PREAMBLE is detected and the subsequent packet passes the parity check, its DATA field will be added to a list of all the data fields successfully harvested from the current frame.</div>
+</div>
+<div class="line-block">
+<div class="line">At the end of the program execution (or between cycles if infinite mode is turned on), all the DATA fields in that list will be dumped into a .npy file in the “./outputs/” folder. The user can run the following script in order to read the contents of the outputs folder. ::</div>
+</div>
+<blockquote>
+<div>python3 read.npy</div></blockquote>
+<div class="line-block">
+<div class="line">No more than 5 .npy files will ever be in that folder at any given time, if the number exceeds the limit then the oldest one will be overwritten in order to prevent memory bloating.</div>
+</div>
+<div class="line-block">
+<div class="line">The file’s name will be the timestamp of its creation.</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="network-integration">
-<h1>Network integration<a class="headerlink" href="#network-integration" title="Permalink to this headline">¶</a></h1>
-<p>During normal</p>
+<h2>Network integration<a class="headerlink" href="#network-integration" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Currently, the easiest way to provide network integration is to remotely access the RPI (see Remote Connection) and harvest the .npy files in “./outfile” in real time.</div>
+<div class="line">Measures have been taken to prevent concurrency issues. If the file is visible in the folder it means my script will no longer interact with it, ever.</div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="debugging-mode">
-<h1>Debugging mode<a class="headerlink" href="#debugging-mode" title="Permalink to this headline">¶</a></h1>
+<h2>Debugging mode<a class="headerlink" href="#debugging-mode" title="Permalink to this headline">¶</a></h2>
 <p>WARNING: ENABLING INFINITE MODE AND DEBUGGING MODE IN THE SAME EXECUTION IS NOT ADVISABLE.</p>
 <div class="line-block">
-<div class="line">When the argument -db is set to ‘True’, the program will produce three aditional .npy files in parallel to it’s normal outputs. These files will be placed in the script’s root folder. Any debugging files from previous executions of the script still present in the destination folder will be overwritten.</div>
+<div class="line">When the argument -db is set to ‘True’, the program will produce three aditional .npy files in parallel to it’s normal “./outputs”. These files will be placed in the script’s root folder. Any debugging files from previous executions of the script still present in the destination folder will be overwritten.</div>
 <div class="line">They contain the following information:</div>
 </div>
 <dl class="docutils">
-<dt>outfile_samples</dt>
-<dd>An array will all the samples collected during the programs execution. This file can get very big very fast. After a few minutes of continuous execution this will become a major resource hog, it will slowdown the script considerably.</dd>
+<dt>outfile_samples.npy</dt>
+<dd>A list with all the samples collected during the programs execution. This file can get very big very fast. After a few minutes of continuous execution this will become a major resource hog, it will slowdown the script considerably.</dd>
+<dt>outfile_signal.npy</dt>
+<dd>A list with the demodulation result of the entire program execution. It will exclusively consist of 1’s and 0’s. If multiple frames were processed the results will be concatenated into a single list.</dd>
+<dt>outfile_SPB.npy</dt>
+<dd>A numeric value which equals the ratio: SamplingRate/SymbolRate</dd>
 </dl>
+<p>Additionally, further debugging tools are available by editing three variables in the source code of the library pdata.py (lines 11-13).
+| These will provide you with helpful graphs and timestamps that might help with diagnosing issues or identifying optimization routes.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="infinite-mode">
-<h1>Infinite mode<a class="headerlink" href="#infinite-mode" title="Permalink to this headline">¶</a></h1>
-<p>WARNING: DO NOT USE DEBUGGING MODE AND INFINITE MODE AT THE SAME TIME DURING PROLONGUED PERIODS OF TIME. (&gt;2 MINS)</p>
+<h2>Infinite mode<a class="headerlink" href="#infinite-mode" title="Permalink to this headline">¶</a></h2>
+<p>WARNING: ENABLING INFINITE MODE AND DEBUGGING MODE IN THE SAME EXECUTION IS NOT ADVISABLE.</p>
+<p>Toggle this on if you wish for the program to run in an infinite loop</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 </div>
 <div class="section" id="gpio">
-<h1>GPIO<a class="headerlink" href="#gpio" title="Permalink to this headline">¶</a></h1>
+<h2>GPIO<a class="headerlink" href="#gpio" title="Permalink to this headline">¶</a></h2>
+<p>Some GPIO pins are configured for LED control, in order to provide the user with additional real-time feedback.</p>
+<p>[FAZER ESQUEMA NO VISIO DAS LIGAÇÕES]</p>
+<div class="line-block">
+<div class="line"><br /></div>
 </div>
-<div class="section" id="ssh-connection">
-<h1>SSH connection<a class="headerlink" href="#ssh-connection" title="Permalink to this headline">¶</a></h1>
-<p>The main outputs produced by the program are printed via terminal fully compatible with remote SSH connections. FTP is also possible in order to acess all the outfiles.</p>
+</div>
+<div class="section" id="remote-connection">
+<h2>Remote connection<a class="headerlink" href="#remote-connection" title="Permalink to this headline">¶</a></h2>
+<p>The main outputs produced by the program are printed via terminal, and therefore are fully compatible with remote SSH connections. FTP is also possible in order to access all the outfiles.
+The Raspberry PI will by default create a hotspot called RPI2. The password to connect to the WiFi access point is password123.</p>
+<p>Relevant software: <a class="reference external" href="https://www.putty.org/">PuTTY</a> (SSH) and <a class="reference external" href="https://filezilla-project.org/">FileZilla</a> (FTP)</p>
+<div class="line-block">
+<div class="line">By default the address the RPI will assign itself will be 192.168.4.1, this can be customized. Here’s a good RPI wifi access point <a class="reference external" href="https://www.raspberrypi.org/documentation/configuration/wireless/access-point.md">tutorial</a> .</div>
+</div>
+<p>Once connected to the RPI hotspot:</p>
+<img alt="_images/PuTTY.png" src="_images/PuTTY.png" />
+<p>The RPI user credentials are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Username</span><span class="p">:</span> <span class="n">pi</span>
+<span class="n">Password</span><span class="p">:</span> <span class="n">raspberry</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="section" id="autonomous-mode">
+<h2>Autonomous mode<a class="headerlink" href="#autonomous-mode" title="Permalink to this headline">¶</a></h2>
+<p>On the RPI’s root directory there is shell executable file configured to run on startup (startup.sh), this file can be edited. to make the RPI automatically start demodulating upon poweron without any necessary user input.
+In order to activate this mode the user should edit the file with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">nano</span> <span class="n">startup</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>And uncomment the second line of conde, adding input arguments as necessary. (See How to use)
+| When all the desired changes are done. Save and close the file and type into the console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">restart</span>
+</pre></div>
+</div>
+<p>In order to deactivate the Autonomous mode, last line of startup.sh must be commented again.</p>
+</div>
 </div>
 
 

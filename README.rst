@@ -1,8 +1,7 @@
-$project
+SoundGen
 ========
 
-$project will solve your problem of where to start with documentation,
-by providing a basic explanation of how to do it easily.
+SoundGen is a flexible burst mode ASK signal demodulator and frame processer, created with DVB-T in mind.
 
 Look how easy it is to use:
 
@@ -13,29 +12,14 @@ Look how easy it is to use:
 Features
 --------
 
-- Be awesome
-- Make things faster
+-ASK demodulation
+-Graph creation tools for debugging support
+-
 
-Installation
-------------
 
-Install $project by running:
+Relevant Links
+---------------
 
-    install project
-
-Contribute
-----------
-
-- Issue Tracker: github.com/$project/$project/issues
-- Source Code: github.com/$project/$project
-
-Support
--------
-
-If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
-
-License
--------
-
-The project is licensed under the BSD license.
+- Documentation:
+- Issue Tracker: https://github.com/Espigao25/SoundGen_Python/issues
+- Source Code: github.com/Espigao25/SoundGen_Python

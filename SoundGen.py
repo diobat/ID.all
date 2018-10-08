@@ -227,7 +227,7 @@ if __name__ == "__main__":
 		for x in range(len(end_result) - len(preamble)):				#Detects preambles
 			if end_result[x:x+len(preamble)] == preamble:
 				preamble_detections += 1
-				if parityOf(end_result[x:x+packet_size-1]):
+				if parityOf(end_result[x:x+packet_size]):
 					message_result.append(end_result[x+len(preamble)-1:x+len(preamble)+info_size-1])
 
 		output_list = os.listdir("./outputs")
@@ -290,19 +290,11 @@ if __name__ == "__main__":
 				GPIO.output(5, True)
 				GPIO.output(7, True)
 				GPIO.output(11, False)
-<<<<<<< HEAD
-				
-				
-			
-		#print(end_result)
-		
-=======
 
 
 
 		print(end_result)
 
->>>>>>> b88ba2ca1eb489e2b6e2eeab04d15777415688b0
 		t_collector.join()
 		#time.sleep(1)
 
