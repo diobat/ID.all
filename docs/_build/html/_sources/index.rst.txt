@@ -57,9 +57,11 @@ How to setup:
   | Run rtl_test on the command line to check if the kit was properly detected and if no warnings or errors were returned.
 
 3. Make sure you are on the project's root folder. It should be located at ""$/SoundGen_Python/SoundGen_Python/".
+
 |
 
 4. You are good to go! :)
+
 |
 
 How to use:
