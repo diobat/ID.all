@@ -20,6 +20,6 @@ Features
 Relevant Links
 ---------------
 
-- Documentation:
+- Documentation: 
 - Issue Tracker: https://github.com/Espigao25/SoundGen_Python/issues
 - Source Code: github.com/Espigao25/SoundGen_Python
