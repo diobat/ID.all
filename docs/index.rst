@@ -35,7 +35,7 @@ Demodulating a signal with a 5kHz symbol rate riding on a 95MHz carrier wave is 
 
  python3 SoundGen.py -f 95000000 -sym 5000
 
-.. _here: https://github.com/Espigao25/SoundGen_Python3
+.. _here: https://github.com/Espigao25/SoundGen_Python
 
 The code repository can be found here_ .
 
@@ -76,7 +76,7 @@ How to use:
 +---------------+-----------------------------------------------------------------------------------------+---------+
 | -sym *        |  Symbol rate                                                                            | int     |
 +---------------+-----------------------------------------------------------------------------------------+---------+
-| -samp         |  Sampling rat. Default is 250kHz                                                        | int     |
+| -samp         |  Sampling rate. Default is 250kHz                                                       | int     |
 +---------------+-----------------------------------------------------------------------------------------+---------+
 | -sf           |  Frame size in samples. Default is 32 768                                               | int     |
 +---------------+-----------------------------------------------------------------------------------------+---------+
@@ -104,7 +104,7 @@ For example, in order to capture a signal with a 10k symbol rate on a 868MHz car
 Demodulation
 -------------
 
-Simply providing the program with a tuning frequency and a symbol rate will always return a string of bit, even in cases when there is nothing but background noise at the specified frequency.
+Simply providing the program with a tuning frequency and a symbol rate will always return a string of bits, even in cases when there is nothing but background noise at the specified frequency.
 The output comes in two forms:
 
 1.A real time print into the terminal instance the program is being run on.
