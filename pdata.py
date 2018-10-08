@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = False 	# 1 para gerar graficos, 0 para nao o fazer
+debug = True 	# 1 para gerar graficos, 0 para nao o fazer
 debug1 = False 	# Idem aspas para timestamps especificos a cada função
 debug2 = False	# timestamp global 
 
@@ -57,7 +57,7 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 		
 	if debug == True:	
 		pylab.plot(signal, 'b')
-		pylab.plot(extended_alliavs, 'red')
+		#pylab.plot(extended_alliavs, 'red')
 		
 		#for xv in word_frontiers[0]:
 			#plt.axvline(x=xv, color='red')
