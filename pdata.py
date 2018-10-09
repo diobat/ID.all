@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = True 	# 1 para gerar graficos, 0 para nao o fazer
+debug = False 	# 1 para gerar graficos, 0 para nao o fazer
 debug1 = False 	# Idem aspas para timestamps especificos a cada função
 debug2 = False	# timestamp global 
 
