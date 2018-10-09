@@ -94,12 +94,14 @@ def variance(args,window):
 	window = int(window)
 	y = range(int(len(args)-window-1))
 	step1 = 50		# We don't have to calculate the variance at every sample, so we define a step of 50
-	step2 = 25		# When we DO calculate the variance, we don't have to take into account every sample inside the [x: x+window] interval, thus we can define a second step1
+	step2 = 50		# When we DO calculate the variance, we don't have to take into account every sample inside the [x: x+window] interval, thus we can define a second step1
 
 	#Both of these steps are to reduce processing power usage, they have a MASSIVE influence. The higher they are the faster the program goes, if they go too high everything stops working, handle with care.
 
 	#for x in range(int(len(args)-window-1)):
 	for x in y[0:-1:step1]:
+		print(len(args[x:x+window]))
+		print(len(args[x:x+window:step2]))
 		result.extend([np.var(args[x:x+window:step2])] * step1)  #This multiplication is to turn a number into an array with a lenght of step
 
 	result1 = [result[0]] * int(np.floor(window/2))
