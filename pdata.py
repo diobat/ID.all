@@ -8,9 +8,14 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
+debug = False 	# 1 para gerar graficos, 0 para nao o fazer
+debug1 = False 	# Idem aspas para timestamps especificos a cada função
+debug2 = False	# timestamp global 
+
 debug = True 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
+
 
 def process_data(signal, samples_per_bit, samples_per_frame):
 
