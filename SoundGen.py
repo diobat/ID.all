@@ -64,7 +64,6 @@ frame_size = args['sfram']
 #signal characteristics
 
 decimation_factor = 1 									# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
-                                                          # Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 signal_frequency = args['symb'] * decimation_factor				# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
 bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message

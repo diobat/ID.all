@@ -10,7 +10,7 @@ global debug, debug1, debug2
 
 debug = False 	# 1 para gerar graficos, 0 para nao o fazer
 debug1 = False 	# Idem aspas para timestamps especificos a cada função
-debug2 = False	# timestamp global 
+debug2 = False	# timestamp global
 
 debug = True 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
@@ -94,7 +94,7 @@ def variance(args,window):
 	window = int(window)
 	y = range(int(len(args)-window-1))
 	step = 50
-	step2 = 0
+	step2 = 1
 
 	#for x in range(int(len(args)-window-1)):
 	for x in y[0:-1:step]:
