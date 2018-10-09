@@ -89,10 +89,11 @@ def variance(args,window):
 	window = int(window)
 	y = range(int(len(args)-window-1))
 	step = 50
+	step2 = 0
 
 	#for x in range(int(len(args)-window-1)):
 	for x in y[0:-1:step]:
-		result.extend([np.var(args[x:x+window])] * step)
+		result.extend([np.var(args[x:x+window:step2])] * step)
 
 	result1 = [result[0]] * int(np.floor(window/2))
 	result2 = [result[-1]] * int(np.floor(window/2))
