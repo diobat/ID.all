@@ -81,8 +81,8 @@
 <li><a class="reference internal" href="#">Welcome to SoundGen’s documentation!</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li><a class="reference internal" href="#what-is-soundgen">What is SoundGen:</a><ul>
-<li><a class="reference internal" href="#how-to-setup">How to setup:</a></li>
-<li><a class="reference internal" href="#how-to-use">How to use:</a></li>
+<li><a class="reference internal" href="#how-to-setup">How to setup</a></li>
+<li><a class="reference internal" href="#how-to-use">How to use</a></li>
 <li><a class="reference internal" href="#demodulation">Demodulation</a></li>
 <li><a class="reference internal" href="#frame-processing">Frame processing</a></li>
 <li><a class="reference internal" href="#network-integration">Network integration</a></li>
@@ -186,7 +186,7 @@
 </div>
 <p>The code repository can be found <a class="reference external" href="https://github.com/Espigao25/SoundGen_Python">here</a> .</p>
 <div class="section" id="how-to-setup">
-<h2>How to setup:<a class="headerlink" href="#how-to-setup" title="Permalink to this headline">¶</a></h2>
+<h2>How to setup<a class="headerlink" href="#how-to-setup" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
 <li>First of all, install all the dependencies. This step is only necessary if you have not been provided with a cloned microSD card.</li>
 </ol>
@@ -204,7 +204,7 @@
 </ol>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Run rtl_test on the command line to check if the kit was properly detected and if no warnings or errors were returned.</div>
+<div class="line">Run rtl_test on the command line to check if the kit was properly detected and no warnings or errors were returned.</div>
 </div>
 </div></blockquote>
 <ol class="arabic simple" start="3">
@@ -221,7 +221,7 @@
 </div>
 </div>
 <div class="section" id="how-to-use">
-<h2>How to use:<a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<h2>How to use<a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
 <p>“python3 SoundGen.py -h” on the terminal will give you a list of all the arguments you can pass into the script. They are:</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -276,7 +276,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">...</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>For example, in order to capture a signal with a 10k symbol rate on a 868MHz carrier wave, with debugging mode on and a gain of 10dB I would type into the terminal:</p>
+<p>For example, in order to capture a signal with a 10k symbol rate on a 868MHz carrier wave, with debugging mode on and a gain of 10dB, I would type into the terminal:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">f</span> <span class="mi">868000000</span> <span class="o">-</span><span class="n">sym</span> <span class="mi">10000</span> <span class="o">-</span><span class="n">db</span> <span class="kc">True</span> <span class="o">-</span><span class="n">g</span> <span class="mi">10</span>
 </pre></div>
 </div>
@@ -392,7 +392,7 @@ In order to activate this mode the user should edit the file with:</p>
 </pre></div>
 </div>
 <p>And uncomment the second line of conde, adding input arguments as necessary. (See How to use)
-| When all the desired changes are done. Save and close the file and type into the console:</p>
+| When all the desired changes are done. Save and close the before rebooting the RPI with:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">restart</span>
 </pre></div>
 </div>
