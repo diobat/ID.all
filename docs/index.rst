@@ -39,7 +39,7 @@ Demodulating a signal with a 5kHz symbol rate riding on a 95MHz carrier wave is 
 
 The code repository can be found here_ .
 
-How to setup:
+How to setup
 --------------
 
 1. First of all, install all the dependencies. This step is only necessary if you have not been provided with a cloned microSD card.
@@ -54,7 +54,7 @@ How to setup:
 
 2. Connect the receiver/SDR kit to your chosen platform via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.
 
-  | Run rtl_test on the command line to check if the kit was properly detected and if no warnings or errors were returned.
+  | Run rtl_test on the command line to check if the kit was properly detected and no warnings or errors were returned.
 
 3. Make sure you are on the project's root folder. It should be located at ""$/SoundGen_Python/SoundGen_Python/".
 
@@ -64,7 +64,7 @@ How to setup:
 
 |
 
-How to use:
+How to use
 ------------
 
 "python3 SoundGen.py -h" on the terminal will give you a list of all the arguments you can pass into the script. They are:
@@ -95,7 +95,7 @@ Proper format is::
 
   python3 SoundGen.py [arg] [value] [arg] [value] ... [arg] [value]
 
-For example, in order to capture a signal with a 10k symbol rate on a 868MHz carrier wave, with debugging mode on and a gain of 10dB I would type into the terminal::
+For example, in order to capture a signal with a 10k symbol rate on a 868MHz carrier wave, with debugging mode on and a gain of 10dB, I would type into the terminal::
 
   python3 SoundGen.py -f 868000000 -sym 10000 -db True -g 10
 
@@ -217,7 +217,7 @@ In order to activate this mode the user should edit the file with::
   sudo nano startup.sh
 
 And uncomment the second line of conde, adding input arguments as necessary. (See How to use)
-| When all the desired changes are done. Save and close the file and type into the console::
+| When all the desired changes are done. Save and close the before rebooting the RPI with::
 
   sudo restart
 
