@@ -12,7 +12,7 @@ debug = False 	# 1 para gerar graficos, 0 para nao o fazer
 debug1 = False 	# Idem aspas para timestamps especificos a cada função
 debug2 = False	# timestamp global
 
-debug = True 	# Should execution be halted at every step to generate graphs?
+debug = False 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
 
@@ -93,12 +93,14 @@ def variance(args,window):
 	result = []
 	window = int(window)
 	y = range(int(len(args)-window-1))
-	step = 50
-	step2 = 1
+	step1 = 50		# We don't have to calculate the variance at every sample, so we define a step of 50
+	step2 = 25		# When we DO calculate the variance, we don't have to take into account every sample inside the [x: x+window] interval, thus we can define a second step1
+
+	#Both of these steps are to reduce processing power usage, they have a MASSIVE influence. The higher they are the faster the program goes, if they go too high everything stops working, handle with care.
 
 	#for x in range(int(len(args)-window-1)):
-	for x in y[0:-1:step]:
-		result.extend([np.var(args[x:x+window:step2])] * step)
+	for x in y[0:-1:step1]:
+		result.extend([np.var(args[x:x+window:step2])] * step1)  #This multiplication is to turn a number into an array with a lenght of step
 
 	result1 = [result[0]] * int(np.floor(window/2))
 	result2 = [result[-1]] * int(np.floor(window/2))
