@@ -222,10 +222,10 @@ if __name__ == "__main__":
 		message_result = []
 
 		for x in range(len(end_result) - len(preamble)):				#Detects preambles
-			if end_result[x:x+len(preamble)] == preamble:
+			if end_result[x:x+len(preamble)-1] == preamble:
 				preamble_detections += 1
-				if parityOf(end_result[x:x+packet_size]):
-					message_result.append(end_result[x+len(preamble)-1:x+len(preamble)+info_size-1])
+				if parityOf(end_result[x:x+packet_size-1]):
+					message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])
 
 		output_list = os.listdir("./outputs")
 
