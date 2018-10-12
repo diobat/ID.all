@@ -100,8 +100,8 @@ def variance(args,window):
 
 	#for x in range(int(len(args)-window-1)):
 	for x in y[0:-1:step1]:
-		print(len(args[x:x+window]))
-		print(len(args[x:x+window:step2]))
+		#print(len(args[x:x+window]))
+		#print(len(args[x:x+window:step2]))
 		result.extend([np.var(args[x:x+window:step2])] * step1)  #This multiplication is to turn a number into an array with a lenght of step
 
 	result1 = [result[0]] * int(np.floor(window/2))
