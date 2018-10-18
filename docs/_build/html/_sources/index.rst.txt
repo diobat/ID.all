@@ -68,6 +68,8 @@ How to use
 
 "python3 SoundGen.py -h" on the terminal will give you a list of all the arguments you can pass into the script. They are:
 
+
+
 +---------------+----------------------------------------------------------------------------+---------+
 | Argument name | Argument description                                                       | type    |
 +---------------+----------------------------------------------------------------------------+---------+
@@ -225,7 +227,8 @@ Relevant software: PuTTY_ (SSH) and FileZilla_ (FTP)
 
 Once connected to the RPI hotspot:
 
-.. image:: images/PuTTY.png
+.. image:: images/putty.png
+  :align: center
 
 The RPI user credentials are::
 
@@ -238,7 +241,7 @@ Autonomous mode
 -----------------
 
 
-On the RPI's root directory there is shell executable file configured to run on startup (startup.sh), this file can be edited. to make the RPI automatically start demodulating upon poweron without any necessary user input.
+On the RPI's root directory there is shell executable file configured to run on startup (startup.sh), this file can be edited to make the RPI automatically start demodulating upon power on without any necessary user input.
 In order to activate this mode the user should edit the file with::
 
   sudo nano startup.sh

@@ -227,7 +227,8 @@ Relevant software: PuTTY_ (SSH) and FileZilla_ (FTP)
 
 Once connected to the RPI hotspot:
 
-.. image:: images/PuTTY.png
+.. image:: images/putty.png
+  :align: center
 
 The RPI user credentials are::
 
