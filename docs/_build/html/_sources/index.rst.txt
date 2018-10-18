@@ -51,8 +51,7 @@ How to setup
   - matplotlib
 
 
-
-2. Connect the receiver/SDR kit to your chosen platform via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.
+2. Connect the receiver/SDR kit to your RPI via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.
 
   | Run rtl_test on the command line to check if the kit was properly detected and no warnings or errors were returned.
 
@@ -69,27 +68,33 @@ How to use
 
 "python3 SoundGen.py -h" on the terminal will give you a list of all the arguments you can pass into the script. They are:
 
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| Argument name | Argument description                                                                    | type    |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -f *          |  Center frequency tuning, should equal the freq of your carrier wave                    | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -sym *        |  Symbol rate                                                                            | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -samp         |  Sampling rate. Default is 250kHz                                                       | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -sf           |  Frame size in samples. Default is 32 768                                               | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -nf           |  Number of frames to process before exiting (unless inf mode is enabled). Default is 5. | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -gain         |  Software gain, must belong to interval [0 50]. Default is 15.                          | int     |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-| -i            |  Infinite mode, runs the program indefinitely if True. Default is False.                | bool    |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-|-db            |  Debug mode, dumps debugging info into three distinct outfiles. Default is False .      | bool    |
-+---------------+-----------------------------------------------------------------------------------------+---------+
-|-h             |  Ignore all other arguments, print this table and exit.                                 | None    |
-+---------------+-----------------------------------------------------------------------------------------+---------+
++---------------+----------------------------------------------------------------------------+---------+
+| Argument name | Argument description                                                       | type    |
++---------------+----------------------------------------------------------------------------+---------+
+| -f *          |  Center frequency tuning, should equal the freq of your carrier wave       | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -sym *        |  Symbol rate                                                               | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -samp         |  Sampling rate.                                                            | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -sf           |  Frame size in samples.                                                    | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -nf           |  Number of frames to process before exiting (unless inf mode is enabled).  | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -gain         |  Software gain, must belong to interval [0 50].                            | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -i            |  Infinite mode, runs the program indefinitely if True.                     | bool    |
++---------------+----------------------------------------------------------------------------+---------+
+|-db            |  Debug mode, dumps debugging info into three distinct outfiles.            | bool    |
++---------------+----------------------------------------------------------------------------+---------+
+|-h             |  Ignore all other arguments, print this table and exit.                    | None    |
++---------------+----------------------------------------------------------------------------+---------+
+
+| All arguments marked in the table with an asterisk are mandatory, the remaining are optional and will revert to default values in case no argument is supplied.
+
+| To know the default values type into terminal ::
+
+  python3 SoundGen.py -h
 
 Proper format is::
 
@@ -175,9 +180,31 @@ Toggle this on if you wish for the program to run in an infinite loop
 GPIO
 -------
 
+
 Some GPIO pins are configured for LED control, in order to provide the user with additional real-time feedback.
 
-[FAZER ESQUEMA NO VISIO DAS LIGAÇÕES]
+| This method works only in rigid packet mode. During normal working of the program, output signals will be produced from the RPI. These signals are intended to be used to control leds. Five different leds will be supported. Four of them [leds 1-4] will be indicative of the success rate in receiving expected packets, calculated via number of received packets versus time interval. A fifth led [led 5] will serve as a heartbeat display.
+
++-------------------+--------------------------------------------+
+| # of active leds  |  Sucess rate interval of last iteration    |
++-------------------+--------------------------------------------+
+| 0                 |  0-25%                                     |
++-------------------+--------------------------------------------+
+| 1                 |  25-50%                                    |
++-------------------+--------------------------------------------+
+| 2                 |  50-75%                                    |
++-------------------+--------------------------------------------+
+| 3                 |  75-90%                                    |
++-------------------+--------------------------------------------+
+| 4                 |  90-100%                                   |
++-------------------+--------------------------------------------+
+
+
+| All resistances in the following scheme should equal 1kΩ.
+
+
+.. image:: images/GPIO_setup.png
+  :align: center
 
 |
 
@@ -198,7 +225,7 @@ Relevant software: PuTTY_ (SSH) and FileZilla_ (FTP)
 
 Once connected to the RPI hotspot:
 
-.. image:: PuTTY.png
+.. image:: images/PuTTY.png
 
 The RPI user credentials are::
 

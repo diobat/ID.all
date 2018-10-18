@@ -200,7 +200,7 @@
 </ul>
 </div></blockquote>
 <ol class="arabic simple" start="2">
-<li>Connect the receiver/SDR kit to your chosen platform via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.</li>
+<li>Connect the receiver/SDR kit to your RPI via USB, remember to use an adequate antenna to the carrier wave you intend to sniff.</li>
 </ol>
 <blockquote>
 <div><div class="line-block">
@@ -225,9 +225,9 @@
 <p>“python3 SoundGen.py -h” on the terminal will give you a list of all the arguments you can pass into the script. They are:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="13%" />
-<col width="79%" />
-<col width="8%" />
+<col width="15%" />
+<col width="76%" />
+<col width="9%" />
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td>Argument name</td>
@@ -243,27 +243,27 @@
 <td>int</td>
 </tr>
 <tr class="row-even"><td>-samp</td>
-<td>Sampling rate. Default is 250kHz</td>
+<td>Sampling rate.</td>
 <td>int</td>
 </tr>
 <tr class="row-odd"><td>-sf</td>
-<td>Frame size in samples. Default is 32 768</td>
+<td>Frame size in samples.</td>
 <td>int</td>
 </tr>
 <tr class="row-even"><td>-nf</td>
-<td>Number of frames to process before exiting (unless inf mode is enabled). Default is 5.</td>
+<td>Number of frames to process before exiting (unless inf mode is enabled).</td>
 <td>int</td>
 </tr>
 <tr class="row-odd"><td>-gain</td>
-<td>Software gain, must belong to interval [0 50]. Default is 15.</td>
+<td>Software gain, must belong to interval [0 50].</td>
 <td>int</td>
 </tr>
 <tr class="row-even"><td>-i</td>
-<td>Infinite mode, runs the program indefinitely if True. Default is False.</td>
+<td>Infinite mode, runs the program indefinitely if True.</td>
 <td>bool</td>
 </tr>
 <tr class="row-odd"><td>-db</td>
-<td>Debug mode, dumps debugging info into three distinct outfiles. Default is False .</td>
+<td>Debug mode, dumps debugging info into three distinct outfiles.</td>
 <td>bool</td>
 </tr>
 <tr class="row-even"><td>-h</td>
@@ -272,6 +272,14 @@
 </tr>
 </tbody>
 </table>
+<div class="line-block">
+<div class="line">All arguments marked in the table with an asterisk are mandatory, the remaining are optional and will revert to default values in case no argument is supplied.</div>
+</div>
+<div class="line-block">
+<div class="line">To know the default values type into terminal ::</div>
+</div>
+<blockquote>
+<div>python3 SoundGen.py -h</div></blockquote>
 <p>Proper format is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">SoundGen</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">...</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
 </pre></div>
@@ -360,7 +368,39 @@ The output comes in two forms:</p>
 <div class="section" id="gpio">
 <h2>GPIO<a class="headerlink" href="#gpio" title="Permalink to this headline">¶</a></h2>
 <p>Some GPIO pins are configured for LED control, in order to provide the user with additional real-time feedback.</p>
-<p>[FAZER ESQUEMA NO VISIO DAS LIGAÇÕES]</p>
+<div class="line-block">
+<div class="line">This method works only in rigid packet mode. During normal working of the program, output signals will be produced from the RPI. These signals are intended to be used to control leds. Five different leds will be supported. Four of them [leds 1-4] will be indicative of the success rate in receiving expected packets, calculated via number of received packets versus time interval. A fifth led [led 5] will serve as a heartbeat display.</div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td># of active leds</td>
+<td>Sucess rate interval of last iteration</td>
+</tr>
+<tr class="row-even"><td>0</td>
+<td>0-25%</td>
+</tr>
+<tr class="row-odd"><td>1</td>
+<td>25-50%</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td>50-75%</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td>75-90%</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>90-100%</td>
+</tr>
+</tbody>
+</table>
+<div class="line-block">
+<div class="line">All resistances in the following scheme should equal 1kΩ.</div>
+</div>
+<img alt="_images/GPIO_setup.png" class="align-center" src="_images/GPIO_setup.png" />
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
