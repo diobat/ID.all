@@ -37,7 +37,7 @@ parser.add_argument('-sym','--symb', help='Symbol Rate of expected ASK signal', 
 args = vars(parser.parse_args())
 
 #args['freq'] will contain the value of arg '-f'
-#args['samp'] will contain the value of optional argument '-s' if any value was passed
+#args['samp'] will contain the value of optional argument '-s' if any value was passed, otherwise revert to default
 #etc
 
 print(args)

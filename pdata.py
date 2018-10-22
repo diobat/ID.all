@@ -8,11 +8,8 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = False 	# 1 para gerar graficos, 0 para nao o fazer
-debug1 = False 	# Idem aspas para timestamps especificos a cada função
-debug2 = False	# timestamp global
 
-debug = False 	# Should execution be halted at every step to generate graphs?
+debug = True	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
 
@@ -226,7 +223,7 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 		pylab.show()
 
-		input("carrega para seguir")
+		input("Press ENTER to proceed")
 
 	if debug1 == True:
 		delta_t = time.time() -t
