@@ -230,6 +230,8 @@ Once connected to the RPI hotspot:
 .. image:: images/putty.png
   :align: center
 
+|
+
 The RPI user credentials are::
 
   Username: pi
