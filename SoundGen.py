@@ -85,8 +85,8 @@ message_result = []										# Reserving space for the message to be extracted f
 oufile_number = 0										#
 
 buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
-global sample_buffer
-sample_buffer = queue.Queue(buffer_size)
+global sample_FIFO
+sample_FIFO = queue.Queue(buffer_size)
 
 
 ## Flow control
@@ -142,7 +142,7 @@ def collectData(): 	#Collect samples
     frame_counter = 0
     t = time.time()
     while frame_counter < stop_at :
-        sample_buffer.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+        sample_FIFO.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
         #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
         frame_counter += 1
 
@@ -151,43 +151,49 @@ def threadInit():	#Initialize threads
 	global t_collector
 	t_collector = threading.Thread(target=collectData, name="Collector", args=[])
 
-if __name__ == "__main__":
 
+
+if __name__ == "__main__":
 
     while infinite_loop == True:
         t = time.time()
 
         threadInit()  # Initialize the required threads.
 
-        end_result = []
-
         t_collector.start()
 
+        end_result = []
         iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
         iteration_count = 0
 
-        while t_collector.isAlive() or sample_buffer.empty() == False:
+        while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
+            pass
+
+        while t_collector.isAlive() or sample_FIFO.empty() == False:  # Cycle until collector thread is alive OR FIFO isn't empty
 
 
-            if sample_buffer.empty() == False: # Are there any samples in the harvesting FIFO?
+            if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-                this_frame = sample_buffer.get_nowait()
+                this_frame = sample_FIFO.get_nowait()
 
-                demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# O sinal cru é desmodulado (ASK) através das funções da biblioteca pdata
+                demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
 
                 end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
 
                 if debug == True:
-                    allsamples.extend(this_frame)
+                    allsamples.extend(this_frame)           # Keep storing samples for later dump if demod is activated
 
         flipped_endresult = [1 - x for x in end_result]
 
-        ###### Information parsing ######
+########################################################################
+### INFORMATION PARSING
+########################################################################
 
         sucesses = 0
         flipped_sucesses = 0
         preamble_detections = 0
+        message_result = []
 
 		# Count the number of sucesses
 
@@ -199,13 +205,13 @@ if __name__ == "__main__":
             if flipped_endresult[x:x+len(desired_result)] == desired_result:
                 flipped_sucesses += 1
 
-        message_result = []
 
-        for x in range(len(end_result) - len(preamble)):				#Detects preambles
+
+        for x in range(len(end_result) - len(preamble)):				# Detects preambles
             if end_result[x:x+len(preamble)] == preamble:
-                preamble_detections += 1
-                if parityOf(end_result[x:x+packet_size-1]):
-                    message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])
+                preamble_detections += 1                                # Counts them
+                if parityOf(end_result[x:x+packet_size-1]):             # Checks for parity in the whole packet
+                    message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])        #if validaded adds to the output batch
 
 
         output_list = os.listdir("./outputs")
@@ -214,7 +220,6 @@ if __name__ == "__main__":
             os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
 
         save('./outputs/' + str(datetime.datetime.now()), message_result)
-
 
         if USE_LEDS == True:
 
@@ -269,7 +274,6 @@ if __name__ == "__main__":
                 GPIO.output(11, False)
 
 
-
         print(end_result)
 
         t_collector.join()
@@ -281,14 +285,13 @@ if __name__ == "__main__":
         print('Loop value is ' + str(args['infi']))
 
 
-
         if debug == True:
             save('outfile_samples', allsamples)
             save('outfile_signal', end_result)
             save('outfile_SPB', samples_per_bit)
 
         iteration_counter += 1
-        if iteration_counter > args['itnum']:
+        if iteration_counter >= args['itnum']:
             infinite_loop = False
 
         infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
