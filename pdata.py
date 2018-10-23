@@ -25,7 +25,7 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	sliced_signal = slice_signal(signal, word_frontiers, window_variance, variance_split)
 
 	envelope = []
-	envelope = enveloper(signal, SPF)
+	envelope = enveloper(sliced_signal, SPF)
 	#threshold = abs(envelope[1] - envelope[0]) * 0.50 + envelope[1]
 	threshold = np.mean(envelope)
 	result = []
