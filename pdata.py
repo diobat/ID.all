@@ -8,11 +8,9 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-
 debug = False 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
-
 
 def process_data(signal, samples_per_bit, samples_per_frame):
 
@@ -22,9 +20,9 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 
 	SPF = samples_per_frame
 
-	word_frontiers = define_wordfrontiers(signal, samples_per_bit)
+	word_frontiers, window_variance, variance_split = define_wordfrontiers(signal, samples_per_bit)
 
-	sliced_signal = slice_signal(signal, word_frontiers)
+	sliced_signal = slice_signal(signal, word_frontiers, window_variance, variance_split)
 
 	envelope = []
 	envelope = enveloper(signal, SPF)
@@ -69,8 +67,6 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 
 		plt.axhline(y=threshold, color ='k')
 
-
-
 		pylab.show()
 		input("Press space to continue")
 
@@ -112,9 +108,6 @@ def variance(args,window):
 		delta_t = time.time() -t
 		print("variance			" + str(delta_t))
 	return result1
-
-
-
 
 def enveloper(signal, SPF):
 
@@ -179,7 +172,6 @@ def define_bitfrontiers(signal, samples_per_bit, threshold):
 		print("define_bitfrontiers		" + str(delta_t))
 	return bit_frontiers
 
-
 def define_wordfrontiers(signal, samples_per_bit):
 
 	global debug, debug1
@@ -190,7 +182,6 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 	window_variance = variance(signal, window)
 
-
 	stretched_variance = np.array(window_variance)*10
 
 	split = max(window_variance) * 0.5
@@ -200,15 +191,9 @@ def define_wordfrontiers(signal, samples_per_bit):
 	word_frontiers_map[0] = 1
 	word_frontiers_map[-1] = 1
 
-
-
-
 	nnz = np.count_nonzero(word_frontiers_map)
 
-
 	word_frontiers = np.ndarray.nonzero(word_frontiers_map)
-
-
 
 	if debug == True:
 		print(word_map)
@@ -228,9 +213,9 @@ def define_wordfrontiers(signal, samples_per_bit):
 	if debug1 == True:
 		delta_t = time.time() -t
 		print("define_wordfrontiers		" + str(delta_t))
-	return word_frontiers
+	return word_frontiers, window_variance, split
 
-def slice_signal(signal, indexes):
+def slice_signal(signal, indexes, window_variance, variance_split):
 
 	t = time.time()
 
@@ -247,8 +232,8 @@ def slice_signal(signal, indexes):
 		a = indexes[0][x]
 		b = indexes[0][x+1]
 
-
-		sliced_signal.append(signal[a:b])
+		if window_variance[indexes[0][x]+1] > variance_split:
+			sliced_signal.append(signal[a:b])
 
 	result = np.asarray(sliced_signal)
 
@@ -305,9 +290,3 @@ def demodulator(iavs, threshold):
 		delta_t = time.time() - t
 		print("demodulator			" + str(delta_t))
 	return result
-
-
-
-#if __name__ == '__main__':
-#    import sys
-#    sys.exit(main(sys.argv))
