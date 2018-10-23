@@ -31,6 +31,7 @@ parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
 parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 32*1024)
 parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
+parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
 parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
 parser.add_argument('-sym','--symb', help='Symbol Rate of expected ASK signal', type=int, required=True, default = 3650)
@@ -120,8 +121,6 @@ allsamples = array.array('f',[0])
 ### FUNCTIONS
 ########################################################################
 
-def main(args):
-    return 0
 
 def parityOf(int_type): # Check parity
 
@@ -139,56 +138,37 @@ def parityOf(int_type): # Check parity
 def collectData(): 	#Collect samples
 
 	global frame_size
-	global iteration_counter, flag_end, stop_at
-	iteration_counter = 0
+	global stop_at
+	frame_counter = 0
 	t = time.time()
-	while iteration_counter < stop_at:
-		sample_buffer.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
-		iteration_counter += 1
-	print("\n###TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 3)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 3)) + "###\n")
-	flag_end = True
+    while frame_counter < stop_at:
+        sample_buffer.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+        #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
+        frame_counter += 1
 
 
 def threadInit():	#Initialize threads
-	global t_collector, t_plotter, flag_end
+	global t_collector
 	t_collector = threading.Thread(target=collectData, name="Collector", args=[])
-	#print(str(threading.active_count()))
-	#t_plotter = threading.Thread(target=plotData, name="Plotter", args=[])
-
-def plotInit():
-
-	global fig
-	global ax
-	global line1
-	global samples
-	global frame_size
-
-	x = range(len(last_n_frames))
-
-	fig = figure()
-	ax = fig.add_subplot(1,1,1)
-	line1, = ax.plot(x, last_n_frames, 'r')
-	ax.set_xlim(0, len(last_n_frames))
-	ax.set_ylim(0, 0.5)
-
 
 if __name__ == "__main__":
-
 
 
 	while infinite_loop == True:
 
 		t = time.time()
 
-		#ion() # Turn on the interactive mode of PyLab, required in order to update the plots in real time
 		threadInit()  # Initialize the required threads.
-		#plotInit() # Initialize the frames, axes, lines and other visual stuff
 
 		end_result = []
-		t_collector.start()
-		flag_end = False
 
-		while flag_end == False or sample_buffer.empty() == False:
+		t_collector.start()
+
+        iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
+        iteration_count = 0
+
+
+		while t_collector.isAlive() or sample_buffer.empty() == False:
 
 
 			if sample_buffer.empty() == False: # Are there any samples in the harvesting FIFO?
@@ -196,7 +176,7 @@ if __name__ == "__main__":
 				this_frame = sample_buffer.get_nowait()
 
 				demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# O sinal cru é desmodulado (ASK) através das funções da biblioteca pdata
-				#print(demod_signal)
+
 				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
 
@@ -204,6 +184,8 @@ if __name__ == "__main__":
 					allsamples.extend(this_frame)
 
 		flipped_endresult = [1 - x for x in end_result]
+
+        ###### Information parsing ######
 
 		sucesses = 0
 		flipped_sucesses = 0
@@ -227,13 +209,13 @@ if __name__ == "__main__":
 				if parityOf(end_result[x:x+packet_size-1]):
 					message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])
 
+
 		output_list = os.listdir("./outputs")
 
 		if len(output_list) >= 5:
 			os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
 
 		save('./outputs/' + str(datetime.datetime.now()), message_result)
-
 
 
 		if USE_LEDS == True:
@@ -307,6 +289,13 @@ if __name__ == "__main__":
 			save('outfile_signal', end_result)
 			save('outfile_SPB', samples_per_bit)
 
-		infinite_loop = args['infi'] 			# Update the flow control variable to match the user argument
+        iteration_counter += 1
+        if iteration_counter > args['itnum']:
+            infinite_loop = False
+
+		infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
+
+
+
 
 	sys.exit(main(sys.argv))
