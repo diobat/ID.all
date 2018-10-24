@@ -224,12 +224,12 @@ def define_wordfrontiers(signal, samples_per_bit):
 		print("Word Frontiers: " + str(word_frontiers[0]))
 		print(nnz)
 		
-		scale = 10000
+		scale = 1
 		wv_toplot = [x * scale for x in window_variance]
 		pylab.plot(signal, 'b')
 		pylab.plot(wv_toplot, 'r')
 		print("Valor do split: " + str(split))
-		plt.axhline(y = split*scale, color='black')
+		#plt.axhline(y = split*scale, color='black')
 
 		pylab.show()
 

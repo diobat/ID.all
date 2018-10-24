@@ -66,12 +66,12 @@ frame_size = args['sfram']
 #signal characteristics
 
 decimation_factor = 1 									# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
-signal_frequency = args['symb'] * decimation_factor				# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
+symbol_rate = args['symb'] * decimation_factor				# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
 bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message
 
-signal_period = 1/signal_frequency
-samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
+symbol_period = 1/symbol_rate
+samples_per_symbol = sdr.sample_rate * symbol_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
 n = 2
 last_n_frames = zeros(frame_size * n)					# Important for plotting
@@ -116,6 +116,18 @@ GPIO.setup(13, GPIO.OUT)
 ## Debugging variables
 
 allsamples = array.array('f',[0])
+
+
+
+########################################################################
+### FILTER CHARACTERIZATION
+########################################################################
+
+wn = (symbol_rate+ 2000 /sdr.sample_rate)   			#Cutoff frequency equals symbol rate plus 2000Hz
+
+
+zb,za = signal.butter(4,  wn , 'low')
+
 
 
 ########################################################################
@@ -166,8 +178,6 @@ if __name__ == "__main__":
 		end_result = []
 		iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
-
-		b,a = signal.butter(4, 0.0220 , 'low')
 		
 		
 		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
@@ -180,10 +190,10 @@ if __name__ == "__main__":
 
 				raw_frame = sample_FIFO.get_nowait()
 
-				this_frame = abs(signal.lfilter(b, a, raw_frame))
+				this_frame = abs(signal.lfilter(zb, za, raw_frame))
 				this_frame = this_frame[1000:-1]
 
-				demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
+				demod_signal = pdata.process_data(this_frame, samples_per_symbol, frame_size) 	# Demodulation
 
 				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
@@ -295,7 +305,7 @@ if __name__ == "__main__":
 		if debug == True:
 			save('outfile_samples', allsamples)
 			save('outfile_signal', end_result)
-			save('outfile_SPB', samples_per_bit)
+			save('outfile_SPB', samples_per_symbol)
 
 		iteration_counter += 1
 		if iteration_counter >= args['itnum']:
