@@ -8,6 +8,7 @@
 
 from pylab import *   	#Graphical capabilities, network and debug outfiles
 from rtlsdr import *	#SDR
+from scipy import signal #Signal Filtering
 import queue			#FIFO/queue
 import threading		#Multi-threading
 import datetime			#timestamps for the outfiles
@@ -166,6 +167,9 @@ if __name__ == "__main__":
         iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
         iteration_count = 0
 
+		b, a = signal.butter(4, 3000, 'high')
+
+
         while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
             pass
 
@@ -174,7 +178,9 @@ if __name__ == "__main__":
 
             if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-                this_frame = sample_FIFO.get_nowait()
+                raw_frame = sample_FIFO.get_nowait()
+
+				this_frame = signal.lfilter(b, a, raw_frame)
 
                 demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
 
