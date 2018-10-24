@@ -123,7 +123,7 @@ allsamples = array.array('f',[0])
 ### FILTER CHARACTERIZATION
 ########################################################################
 
-wn = (symbol_rate+ 2000 /sdr.sample_rate)   			#Cutoff frequency equals symbol rate plus 2000Hz
+wn = (symbol_rate+ 2000) /sdr.sample_rate   			#Cutoff frequency equals symbol rate plus 2000Hz
 
 
 zb,za = signal.butter(4,  wn , 'low')
