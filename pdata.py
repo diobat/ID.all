@@ -27,7 +27,15 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	envelope = []
 	envelope = enveloper(sliced_signal, SPF)
 	#threshold = abs(envelope[1] - envelope[0]) * 0.50 + envelope[1]
-	threshold = np.mean(envelope)
+	
+	#print('envelope = ' + str(envelope))
+	
+	threshold = []
+	for x in range(len(envelope[0])):
+		threshold.append((envelope[0][x] + envelope[1][x]) / 2)
+	
+	#print('threshold = ' + str(threshold))
+	
 	result = []
 
 	allbit_frontier = []
@@ -36,12 +44,17 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	alldemodulated_signal = []
 	counter = 0
 
+	#print('sliced signal lenght')
+	#print(len(sliced_signal))
+	#print('number of thresholds')
+	#print(len(threshold))
+	
 	for x in range(len(sliced_signal)):
 
 
-		bit_frontier = define_bitfrontiers(sliced_signal[x], samples_per_bit, threshold)
+		bit_frontier = define_bitfrontiers(sliced_signal[x], samples_per_bit, threshold[x])
 		iavs = interval_average(sliced_signal[x], bit_frontier)
-		demodulated_signal = demodulator(iavs, threshold)
+		demodulated_signal = demodulator(iavs, threshold[x])
 
 		result.extend(demodulated_signal)
 
@@ -73,7 +86,6 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	if debug1 == True or debug2 == True:
 		delta_t = time.time() -t
 		print("TOTAL TIME				" + str(delta_t))
-		#input("Enter to proceed")
 	return result
 
 
@@ -109,7 +121,7 @@ def variance(args,window):
 		print("variance			" + str(delta_t))
 	return result1
 
-def enveloper(signal, SPF):
+def enveloper(signal_sliced, SPF):
 
 	t = time.time()
 
@@ -119,12 +131,22 @@ def enveloper(signal, SPF):
 	#last_n_frames[-SPF:end] = signal
 	#I = np.nonzero(last_n_frames)
 	#first_non_zero = I[0][0]
+	
+	yupper = []
+	ylower = []	
+	
+	for x in range(len(signal_sliced)):
+		#print(len(signal_sliced[x]))
+		#print(type(signal_sliced[x]))
+		#print(type(np.percentile(signal_sliced[x], 97)))
+		
+		yupper.append(np.percentile(signal_sliced[x], 97))
+		ylower.append(np.percentile(signal_sliced[x],  3))
 
-
-	yupper = np.percentile(signal, 97)
-	ylower = np.percentile(signal, 3)
-
+	#print(yupper)
+	#print(ylower)
 	envelope = [yupper, ylower]
+	#print(envelope)
 
 	if debug1 == True:
 		delta_t = time.time() -t
@@ -137,14 +159,14 @@ def define_bitfrontiers(signal, samples_per_bit, threshold):
 
 	global debug, debug1
 
-	rounded_samples = int(np.ceil(samples_per_bit))
-	quality = np.zeros(rounded_samples)
+	rounded_SPB = int(np.ceil(samples_per_bit))
+	quality = np.zeros(rounded_SPB)
 	number_of_bits = int(np.floor((len(signal)/samples_per_bit)))
 	range_number_of_bits = range(number_of_bits - 1)
 	step = 2
 	#step = int(samples_per_bit/32)
 
-	for i in range(rounded_samples):
+	for i in range(rounded_SPB):
 
 		amplitudeSum = 0
 
