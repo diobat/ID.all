@@ -19,6 +19,8 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	global debug, debug1, debug2
 
 	SPF = samples_per_frame
+	
+	signal = signal[1500:-1]
 
 	word_frontiers, window_variance, variance_split = define_wordfrontiers(signal, samples_per_bit)
 
@@ -77,8 +79,8 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 
 		for xc in allbit_frontier:
 			plt.axvline(x=xc)
-
-		plt.axhline(y=threshold, color ='k')
+		
+		#plt.axhline(y=threshold, color ='k')
 
 		pylab.show()
 		input("Press space to continue")
@@ -200,14 +202,13 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 	t = time.time()
 
-	window = round(samples_per_bit * 10)
+	window = round(samples_per_bit * 6)
 
 	window_variance = variance(signal, window)
 
-	stretched_variance = np.array(window_variance)*10
 
-	split = max(window_variance) * 0.5
-	#split = np.percentile(window_variance, 0.4)
+	split = max(window_variance) * 0.15
+	#split = np.percentile(window_variance, 20)
 	word_map = (window_variance > split)
 	word_frontiers_map = np.bitwise_xor(word_map[0:-2], word_map[1:-1])
 	word_frontiers_map[0] = 1
@@ -222,11 +223,13 @@ def define_wordfrontiers(signal, samples_per_bit):
 		print(word_frontiers_map)
 		print("Word Frontiers: " + str(word_frontiers[0]))
 		print(nnz)
-
+		
+		scale = 1
+		wv_toplot = [x * scale for x in window_variance]
 		pylab.plot(signal, 'b')
-		pylab.plot(window_variance, 'r')
+		pylab.plot(wv_toplot, 'r')
 		print("Valor do split: " + str(split))
-		plt.axhline(y = split, color='black')
+		#plt.axhline(y = split*scale, color='black')
 
 		pylab.show()
 
