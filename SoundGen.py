@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
             if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-                raw_frame = sample_FIFO.get_nowait()
+				raw_frame = sample_FIFO.get_nowait()
 
 				this_frame = signal.lfilter(b, a, raw_frame)
 
