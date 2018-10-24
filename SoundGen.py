@@ -167,7 +167,7 @@ if __name__ == "__main__":
 		iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
 
-		b,a = signal.butter(4, 3000, 'high')
+		b,a = signal.butter(4, 0.0220 , 'low')
 		
 		
 		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
@@ -180,7 +180,8 @@ if __name__ == "__main__":
 
 				raw_frame = sample_FIFO.get_nowait()
 
-				this_frame = signal.lfilter(b, a, raw_frame)
+				this_frame = abs(signal.lfilter(b, a, raw_frame))
+				this_frame = this_frame[1000:-1]
 
 				demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
 
