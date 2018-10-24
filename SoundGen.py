@@ -156,153 +156,153 @@ def threadInit():	#Initialize threads
 
 if __name__ == "__main__":
 
-    while infinite_loop == True:
-        t = time.time()
+	while infinite_loop == True:
+		t = time.time()
 
-        threadInit()  # Initialize the required threads.
+		threadInit()  # Initialize the required threads.
 
-        t_collector.start()
+		t_collector.start()
 
-        end_result = []
-        iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
-        iteration_count = 0
+		end_result = []
+		iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
+		iteration_count = 0
 
-		b, a = signal.butter(4, 3000, 'high')
+		b,a = signal.butter(4, 3000, 'high')
+		
+		
+		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
+			pass
+
+		while t_collector.isAlive() or sample_FIFO.empty() == False:  # Cycle until collector thread is alive OR FIFO isn't empty
 
 
-        while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
-            pass
-
-        while t_collector.isAlive() or sample_FIFO.empty() == False:  # Cycle until collector thread is alive OR FIFO isn't empty
-
-
-            if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
+			if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
 				raw_frame = sample_FIFO.get_nowait()
 
 				this_frame = signal.lfilter(b, a, raw_frame)
 
-                demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
+				demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
 
-                end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
+				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
 
-                if debug == True:
-                    allsamples.extend(this_frame)           # Keep storing samples for later dump if demod is activated
+				if debug == True:
+					allsamples.extend(this_frame)           # Keep storing samples for later dump if demod is activated
 
-        flipped_endresult = [1 - x for x in end_result]
+		flipped_endresult = [1 - x for x in end_result]
 
 ########################################################################
 ### INFORMATION PARSING
 ########################################################################
 
-        sucesses = 0
-        flipped_sucesses = 0
-        preamble_detections = 0
-        message_result = []
+		sucesses = 0
+		flipped_sucesses = 0
+		preamble_detections = 0
+		message_result = []
 
 		# Count the number of sucesses
 
-        for x in range(len(end_result) - len(desired_result)):
-            if end_result[x:x+len(desired_result)] == desired_result:
-                sucesses += 1
+		for x in range(len(end_result) - len(desired_result)):
+			if end_result[x:x+len(desired_result)] == desired_result:
+				sucesses += 1
 
-        for x in range(len(flipped_endresult) - len(desired_result)):
-            if flipped_endresult[x:x+len(desired_result)] == desired_result:
-                flipped_sucesses += 1
-
-
-
-        for x in range(len(end_result) - len(preamble)):				# Detects preambles
-            if end_result[x:x+len(preamble)] == preamble:
-                preamble_detections += 1                                # Counts them
-                if parityOf(end_result[x:x+packet_size-1]):             # Checks for parity in the whole packet
-                    message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])        #if validaded adds to the output batch
-
-
-        output_list = os.listdir("./outputs")
-
-        if len(output_list) >= 5:
-            os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
-
-        save('./outputs/' + str(datetime.datetime.now()), message_result)
-
-        if USE_LEDS == True:
-
-            max_sucesses = max(sucesses, flipped_sucesses)
-            success_ratio = max_sucesses/max_packages
-
-            heartbeat = not heartbeat
-            GPIO.output(13, heartbeat)
+		for x in range(len(flipped_endresult) - len(desired_result)):
+			if flipped_endresult[x:x+len(desired_result)] == desired_result:
+				flipped_sucesses += 1
 
 
 
-            if success_ratio >= 0 and success_ratio < 0.25:
-
-                GPIO.output(3, False)
-                GPIO.output(5, False)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.25 and success_ratio < 0.5:
-
-                GPIO.output(3, True)
-                GPIO.output(5, False)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.5 and success_ratio < 0.75:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.75 and success_ratio < 0.9:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.9 and success_ratio <= 1:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, True)
-
-            else:
-
-                GPIO.output(3, False)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, False)
+		for x in range(len(end_result) - len(preamble)):				# Detects preambles
+			if end_result[x:x+len(preamble)] == preamble:
+				preamble_detections += 1                                # Counts them
+				if parityOf(end_result[x:x+packet_size-1]):             # Checks for parity in the whole packet
+					message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])        #if validaded adds to the output batch
 
 
-        print(end_result)
+		output_list = os.listdir("./outputs")
 
-        t_collector.join()
-        #time.sleep(1)
+		if len(output_list) >= 5:
+			os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
 
-        print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )
+		save('./outputs/' + str(datetime.datetime.now()), message_result)
 
-        print('Debug value is ' + str(debug))
-        print('Loop value is ' + str(args['infi']))
+		if USE_LEDS == True:
 
+			max_sucesses = max(sucesses, flipped_sucesses)
+			success_ratio = max_sucesses/max_packages
 
-        if debug == True:
-            save('outfile_samples', allsamples)
-            save('outfile_signal', end_result)
-            save('outfile_SPB', samples_per_bit)
-
-        iteration_counter += 1
-        if iteration_counter >= args['itnum']:
-            infinite_loop = False
-
-        infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
+			heartbeat = not heartbeat
+			GPIO.output(13, heartbeat)
 
 
 
+			if success_ratio >= 0 and success_ratio < 0.25:
 
-    sys.exit(main(sys.argv))
+				GPIO.output(3, False)
+				GPIO.output(5, False)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+
+			elif success_ratio >= 0.25 and success_ratio < 0.5:
+
+				GPIO.output(3, True)
+				GPIO.output(5, False)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+
+			elif success_ratio >= 0.5 and success_ratio < 0.75:
+
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, False)
+				GPIO.output(11, False)
+
+			elif success_ratio >= 0.75 and success_ratio < 0.9:
+
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, False)
+
+			elif success_ratio >= 0.9 and success_ratio <= 1:
+
+				GPIO.output(3, True)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, True)
+
+			else:
+
+				GPIO.output(3, False)
+				GPIO.output(5, True)
+				GPIO.output(7, True)
+				GPIO.output(11, False)
+
+
+		print(end_result)
+
+		t_collector.join()
+		#time.sleep(1)
+
+		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )
+
+		print('Debug value is ' + str(debug))
+		print('Loop value is ' + str(args['infi']))
+
+
+		if debug == True:
+			save('outfile_samples', allsamples)
+			save('outfile_signal', end_result)
+			save('outfile_SPB', samples_per_bit)
+
+		iteration_counter += 1
+		if iteration_counter >= args['itnum']:
+			infinite_loop = False
+
+		infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
+
+
+
+
+	sys.exit(main(sys.argv))
