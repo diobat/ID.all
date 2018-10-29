@@ -155,7 +155,7 @@ def collectData(): 	#Collect samples
     frame_counter = 0
     t = time.time()
     while frame_counter < stop_at :
-        sample_FIFO.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+        sample_FIFO.put_nowait(abs((sdr.read_samples(frame_size))**2))  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
         #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
         frame_counter += 1
 
