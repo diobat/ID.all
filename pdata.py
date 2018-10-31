@@ -19,8 +19,6 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 	global debug, debug1, debug2
 
 	SPF = samples_per_frame
-	
-	signal = signal[1500:-1]
 
 	word_frontiers, window_variance, variance_split = define_wordfrontiers(signal, samples_per_bit)
 
@@ -208,7 +206,7 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 
 	split = max(window_variance) * 0.15
-	#split = np.percentile(window_variance, 20)
+
 	word_map = (window_variance > split)
 	word_frontiers_map = np.bitwise_xor(word_map[0:-2], word_map[1:-1])
 	word_frontiers_map[0] = 1
