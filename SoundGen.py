@@ -65,13 +65,11 @@ frame_size = args['sfram']
 
 #signal characteristics
 
-decimation_factor = 1 									# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
-symbol_rate = args['symb'] * decimation_factor				# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
-
-bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message
+decimation_factor = 1		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
+symbol_rate = args['symb']								# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
 symbol_period = 1/symbol_rate
-samples_per_symbol = sdr.sample_rate * symbol_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
+samples_per_symbol = (sdr.sample_rate * symbol_period) / decimation_factor	# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
 n = 2
 last_n_frames = zeros(frame_size * n)					# Important for plotting
@@ -123,10 +121,13 @@ allsamples = array.array('f',[0])
 ### FILTER CHARACTERIZATION
 ########################################################################
 
-wn = (symbol_rate+ 2000) /sdr.sample_rate   			#Cutoff frequency equals symbol rate plus 2000Hz
+#print('symbol_rate = ' + str(symbol_rate))
 
+wn2 = (symbol_rate  * 2.6)  / (2*sdr.sample_rate)   			#HIGH Cutoff frequency
+wn1 = (symbol_rate * 0.3)  / (2*sdr.sample_rate)			#LOW Cutoff frequency 
 
-zb,za = signal.butter(4,  wn , 'low')
+zb1,za1 = signal.butter(2, [wn1, wn2] , 'bandpass')			## band pass filter	
+zb2,za2 = signal.butter(4, wn2 , 'lowpass')					## low pass filter
 
 
 
@@ -150,14 +151,19 @@ def parityOf(int_type): # Check parity
 
 def collectData(): 	#Collect samples
 
-    global frame_size
-    global stop_at
-    frame_counter = 0
-    t = time.time()
-    while frame_counter < stop_at :
-        sample_FIFO.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+	global frame_size
+	global stop_at
+	frame_counter = 0
+	t = time.time()
+	while frame_counter < stop_at :
+		samples = sdr.read_samples(frame_size)
+
+		samples2 = abs(samples)
+		
+		sample_FIFO.put_nowait(samples2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO		
+		
         #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
-        frame_counter += 1
+		frame_counter += 1
 
 
 def threadInit():	#Initialize threads
@@ -183,17 +189,27 @@ if __name__ == "__main__":
 		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
 			pass
 
-		while t_collector.isAlive() or sample_FIFO.empty() == False:  # Cycle until collector thread is alive OR FIFO isn't empty
+		while t_collector.isAlive() or sample_FIFO.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
 
 
 			if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-				raw_frame = sample_FIFO.get_nowait()
+				this_frame = sample_FIFO.get_nowait()
+				
 
-				this_frame = abs(signal.lfilter(zb, za, raw_frame))
-				this_frame = this_frame[1000:-1]
+				this_frame = abs(signal.lfilter(zb2, za2, this_frame)) 	# Apply low pass filter
+				#this_frame = abs(signal.lfilter(zb1, za1, raw_frame))	# Apply band pass filter
 
-				demod_signal = pdata.process_data(this_frame, samples_per_symbol, frame_size) 	# Demodulation
+				#if decimation_factor > 1:
+				#	 this_frame = signal.decimate(this_frame, decimation_factor)	# Decimate if decimation order > 1	
+
+				
+				this_frame = this_frame[int(3000/decimation_factor):-1]
+
+				#plot(range(len(this_frame)), this_frame)
+				#show()
+
+				demod_signal = pdata.process_data(this_frame, samples_per_symbol, len(this_frame)) 	# Demodulation
 
 				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
@@ -240,8 +256,11 @@ if __name__ == "__main__":
 
 		if USE_LEDS == True:
 
+			temporal_window = (1/sdr.sample_rate)*frame_size
+			packet_starts_t_delta = 0.0152
+			
 			max_sucesses = max(sucesses, flipped_sucesses)
-			success_ratio = max_sucesses/max_packages
+			success_ratio = max_sucesses / (temporal_window/packet_starts_t_delta) 
 
 			heartbeat = not heartbeat
 			GPIO.output(13, heartbeat)
@@ -296,7 +315,9 @@ if __name__ == "__main__":
 		t_collector.join()
 		#time.sleep(1)
 
-		print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )
+
+		runtime = round(time.time() -t, 3)
+		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) + "\nFlipped Sucesses: 	" + str(flipped_sucesses) + "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(max_sucesses / max(temporal_window,runtime)) )
 
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
