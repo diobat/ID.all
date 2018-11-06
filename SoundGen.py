@@ -15,7 +15,7 @@ import datetime			#timestamps for the outfiles
 import os				#file management
 import array
 import sys
-import pdata			#demodulating library
+import pdata, PBZ_comparator			#demodulating library
 import time				#timestamps
 import RPi.GPIO as GPIO	#LED's
 import argparse			#argumment management
@@ -65,7 +65,7 @@ frame_size = args['sfram']
 
 #signal characteristics
 
-decimation_factor = 1		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
+decimation_factor = 2		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
 symbol_rate = args['symb']								# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
 symbol_period = 1/symbol_rate
@@ -123,11 +123,11 @@ allsamples = array.array('f',[0])
 
 #print('symbol_rate = ' + str(symbol_rate))
 
-wn2 = (symbol_rate  * 2.6)  / (2*sdr.sample_rate)   			#HIGH Cutoff frequency
-wn1 = (symbol_rate * 0.3)  / (2*sdr.sample_rate)			#LOW Cutoff frequency 
+wn2 = (symbol_rate  * 1)  / (0.5*sdr.sample_rate)   			#HIGH Cutoff frequency
+wn1 = (symbol_rate * 0.0125)  / (0.5*sdr.sample_rate)			#LOW Cutoff frequency 
 
 zb1,za1 = signal.butter(2, [wn1, wn2] , 'bandpass')			## band pass filter	
-zb2,za2 = signal.butter(4, wn2 , 'lowpass')					## low pass filter
+zb2,za2 = signal.butter(6, wn2 , 'lowpass')					## low pass filter
 
 
 
@@ -197,20 +197,21 @@ if __name__ == "__main__":
 				this_frame = sample_FIFO.get_nowait()
 				
 
-				this_frame = abs(signal.lfilter(zb2, za2, this_frame)) 	# Apply low pass filter
-				#this_frame = abs(signal.lfilter(zb1, za1, raw_frame))	# Apply band pass filter
+				#this_frame = abs(signal.lfilter(zb2, za2, this_frame)) 	# Apply low pass filter
+				this_frame = abs(signal.lfilter(zb1, za1, this_frame))	# Apply band pass filter
 
-				#if decimation_factor > 1:
-				#	 this_frame = signal.decimate(this_frame, decimation_factor)	# Decimate if decimation order > 1	
+				if decimation_factor > 1:
+					 this_frame = signal.decimate(this_frame, decimation_factor)	# Decimate if decimation order > 1	
 
 				
-				this_frame = this_frame[int(3000/decimation_factor):-1]
+				this_frame = this_frame[int(6500/decimation_factor):-1]
 
 				#plot(range(len(this_frame)), this_frame)
 				#show()
 
-				demod_signal = pdata.process_data(this_frame, samples_per_symbol, len(this_frame)) 	# Demodulation
-
+				demod_signal = pdata.process_data(this_frame, samples_per_symbol, len(this_frame)) 		#Deep Demodulation
+				#demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)			#PBZ Demodulation
+				
 				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 
 
@@ -310,14 +311,14 @@ if __name__ == "__main__":
 				GPIO.output(11, False)
 
 
-		print(end_result)
+		#print(end_result)
 
 		t_collector.join()
 		#time.sleep(1)
 
 
 		runtime = round(time.time() -t, 3)
-		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) + "\nFlipped Sucesses: 	" + str(flipped_sucesses) + "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(max_sucesses / max(temporal_window,runtime)) )
+		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) + "\nFlipped Sucesses: 	" + str(flipped_sucesses) + "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(max_sucesses / max(temporal_window,runtime), 2) ))
 
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
