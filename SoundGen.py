@@ -65,7 +65,7 @@ frame_size = args['sfram']
 
 #signal characteristics
 
-decimation_factor = 2		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
+decimation_factor = 1		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
 symbol_rate = args['symb']								# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
 symbol_period = 1/symbol_rate
@@ -123,11 +123,16 @@ allsamples = array.array('f',[0])
 
 #print('symbol_rate = ' + str(symbol_rate))
 
-wn2 = (symbol_rate  * 1)  / (0.5*sdr.sample_rate)   			#HIGH Cutoff frequency
-wn1 = (symbol_rate * 0.0125)  / (0.5*sdr.sample_rate)			#LOW Cutoff frequency 
+wn2 = (symbol_rate  * 1)  / (0.5*sdr.sample_rate)   			#HIGH Cutoff frequency for band pass filter
+wn1 = (symbol_rate * 0.0125)  / (0.5*sdr.sample_rate)			#LOW Cutoff frequency for band pass filter
 
 zb1,za1 = signal.butter(2, [wn1, wn2] , 'bandpass')			## band pass filter	
-zb2,za2 = signal.butter(6, wn2 , 'lowpass')					## low pass filter
+
+
+wn2 = (symbol_rate  * 2)  / (0.5*sdr.sample_rate)   			#HIGH Cutoff frequency for lowpass filter
+
+
+zb2,za2 = signal.butter(4, wn2 , 'lowpass')					## low pass filter
 
 
 
@@ -209,8 +214,8 @@ if __name__ == "__main__":
 				#plot(range(len(this_frame)), this_frame)
 				#show()
 
-				demod_signal = pdata.process_data(this_frame, samples_per_symbol, len(this_frame)) 		#Deep Demodulation
-				#demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)			#PBZ Demodulation
+				#demod_signal = pdata.process_data(this_frame, samples_per_symbol, len(this_frame)) 		#Deep Demodulation
+				demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)			#PBZ Demodulation
 				
 				end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
 

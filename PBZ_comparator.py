@@ -6,9 +6,6 @@ debug = False		# Set to true to plot graphs
 
 def compare_signal(signal, samples_per_symbol):
 
-	signal = signal[1:-1]
-
-
 
 	signal_ceil = max(signal)
 	signal_floor = min(signal)
