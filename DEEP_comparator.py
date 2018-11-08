@@ -12,9 +12,9 @@ debug = False 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
 
-def process_data(signal, samples_per_bit, samples_per_frame):
+def compare_signal(signal, samples_per_bit):
 	
-	
+	s
 	signal_ceil = max(signal)
 	signal_floor = min(signal)
 	#print("\n\namplitude" + str(signal_ceil - signal_floor) + "\n\n")
@@ -24,7 +24,8 @@ def process_data(signal, samples_per_bit, samples_per_frame):
 
 	global debug, debug1, debug2
 
-	SPF = samples_per_frame
+	
+	SPF = len(signal)
 
 	word_frontiers, window_variance, variance_split = define_wordfrontiers(signal, samples_per_bit)
 
