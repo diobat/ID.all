@@ -8,15 +8,14 @@
 
 from pylab import *   	#Graphical capabilities, network and debug outfiles
 from rtlsdr import *	#SDR
+from scipy import signal #Signal Filtering
 import queue			#FIFO/queue
 import threading		#Multi-threading
-import datetime			#timestamps for the outfiles
-import os				#file management
+import RPi.GPIO as GPIO	#LED's
 import array
 import sys
-import pdata			#demodulating library
-import time				#timestamps
-import RPi.GPIO as GPIO	#LED's
+import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, gpioGen		#demodulating library
+import time				#time deltas
 import argparse			#argumment management
 #import scipy.signal
 
@@ -29,7 +28,7 @@ parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo B
 parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=True)
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
-parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 32*1024)
+parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 320*1024)
 parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
@@ -64,25 +63,18 @@ frame_size = args['sfram']
 
 #signal characteristics
 
-decimation_factor = 1 									# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
-signal_frequency = args['symb'] * decimation_factor				# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
+decimation_factor = 1		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
+symbol_rate = args['symb']								# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
 
-bits_per_word = 32										# How many bits of information will be arriving in burst in each recieved message
+symbol_period = 1/symbol_rate
+samples_per_symbol = (sdr.sample_rate * symbol_period) / decimation_factor	# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
-signal_period = 1/signal_frequency
-samples_per_bit = sdr.sample_rate * signal_period		# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 
-n = 2
-last_n_frames = zeros(frame_size * n)					# Important for plotting
-
-desired_result = [1,0,1,0,0,0,1,0,0,0,1,0,1,1]			# This is the sequence of bits that the program will interpret as a "Success"
 preamble = [1,0,1,0]									# This is the sequence of bits that the program will interpret as the start of a packet
 
-info_size = 8											# The information part of the packet consists of 2 hexadecimal chars, 8 bits
-packet_size = len(preamble) + info_size + 2				# Parity + 2 hexa chars + parity bit + stop bit
+payload_size = 8										# The information part of the packet consists of 2 hexadecimal chars, 8 bits
+packet_size = len(preamble) + payload_size + 4				# Parity + 2 hexa chars + 3 CRC bits + 2 stop bits
 
-message_result = []										# Reserving space for the message to be extracted from received frames
-oufile_number = 0										#
 
 buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
 global sample_FIFO
@@ -101,7 +93,6 @@ debug = args['dbug']									# Debug capabilities switch
 
 USE_LEDS = True
 heartbeat = True
-max_packages = stop_at * 10;
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -122,29 +113,19 @@ allsamples = array.array('f',[0])
 ########################################################################
 
 
-def parityOf(int_type): # Check parity
-
-	x = 0
-	for bit in int_type:
-		x = (x << 1) | bit
-
-	parity = False
-	while (x):
-		parity = ~parity
-		x = x & (x - 1)
-	return(parity)
-
 
 def collectData(): 	#Collect samples
 
-    global frame_size
-    global stop_at
-    frame_counter = 0
-    t = time.time()
-    while frame_counter < stop_at :
-        sample_FIFO.put_nowait(abs(sdr.read_samples(frame_size))**2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+	global frame_size
+	global stop_at
+	frame_counter = 0
+	t = time.time()
+	while frame_counter < stop_at :
+		samples = sdr.read_samples(frame_size)
+		samples2 = abs(samples)
+		sample_FIFO.put_nowait(samples2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO		
         #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
-        frame_counter += 1
+		frame_counter += 1
 
 
 def threadInit():	#Initialize threads
@@ -155,148 +136,99 @@ def threadInit():	#Initialize threads
 
 if __name__ == "__main__":
 
-    while infinite_loop == True:
-        t = time.time()
+	while infinite_loop == True:
+		t = time.time()
 
-        threadInit()  # Initialize the required threads.
+		threadInit()  # Initialize the required threads.
 
-        t_collector.start()
+		t_collector.start()
 
-        end_result = []
-        iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
-        iteration_count = 0
+		end_result = []
+		iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
+		iteration_count = 0
+		
+		
+		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
+			pass
 
-        while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
-            pass
-
-        while t_collector.isAlive() or sample_FIFO.empty() == False:  # Cycle until collector thread is alive OR FIFO isn't empty
-
-
-            if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
-
-                this_frame = sample_FIFO.get_nowait()
-
-                demod_signal = pdata.process_data(this_frame, samples_per_bit, frame_size) 	# Demodulation
-
-                end_result.extend(demod_signal)												# O resultado obtido da desmodulação é anexado ao fim do array end_result
+		while t_collector.isAlive() or sample_FIFO.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
 
 
-                if debug == True:
-                    allsamples.extend(this_frame)           # Keep storing samples for later dump if demod is activated
+			if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-        flipped_endresult = [1 - x for x in end_result]
+				this_frame = sample_FIFO.get_nowait()
+				
+				this_frame =  filterGen.bp_butter(this_frame, [15, 3600], 2, sdr.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
+
+				if decimation_factor > 1:
+					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1	
+
+				
+				this_frame = this_frame[int(12500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
+
+
+				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 		#Deep Demodulation
+				demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)							#PBZ Demodulation
+				
+				end_result.extend(demod_signal)							# The comparator's output is concatenated to the array end_result
+
+
+				if debug == True:
+					allsamples.extend(this_frame)           			# Keep storing samples for later dump if demod is activated
+
+
 
 ########################################################################
 ### INFORMATION PARSING
 ########################################################################
 
-        sucesses = 0
-        flipped_sucesses = 0
-        preamble_detections = 0
-        message_result = []
-
-		# Count the number of sucesses
-
-        for x in range(len(end_result) - len(desired_result)):
-            if end_result[x:x+len(desired_result)] == desired_result:
-                sucesses += 1
-
-        for x in range(len(flipped_endresult) - len(desired_result)):
-            if flipped_endresult[x:x+len(desired_result)] == desired_result:
-                flipped_sucesses += 1
+		message_result, sucesses, flipped_sucesses, preamble_detections = parseGen.binary_parse(end_result, preamble , packet_size , payload_size)
 
 
-
-        for x in range(len(end_result) - len(preamble)):				# Detects preambles
-            if end_result[x:x+len(preamble)] == preamble:
-                preamble_detections += 1                                # Counts them
-                if parityOf(end_result[x:x+packet_size-1]):             # Checks for parity in the whole packet
-                    message_result.append(end_result[x+len(preamble):x+len(preamble)+info_size])        #if validaded adds to the output batch
+########################################################################
+### NETWORK INTEGRATION
+########################################################################
 
 
-        output_list = os.listdir("./outputs")
+		fileGen.save_payload(message_result, debug, allsamples, end_result, samples_per_symbol)
+		
+		
+########################################################################
+### RPI GPIO UPDATING
+########################################################################
+		
+		
+		temporal_window = (1/sdr.sample_rate)*frame_size				
+		packet_starts_t_delta = 0.0152									# Time in seconds between start of consecutive packets,
+			
+		max_sucesses = max(sucesses, flipped_sucesses)
+		success_ratio = max_sucesses / (temporal_window/packet_starts_t_delta) 
 
-        if len(output_list) >= 5:
-            os.remove('./outputs/' + min(output_list))	#If there are 5 files or more in the outputs folder, delete the oldest file. Filenames are timestamps so its easy to find the oldest one.
+		if USE_LEDS == True:
 
-        save('./outputs/' + str(datetime.datetime.now()), message_result)
-
-        if USE_LEDS == True:
-
-            max_sucesses = max(sucesses, flipped_sucesses)
-            success_ratio = max_sucesses/max_packages
-
-            heartbeat = not heartbeat
-            GPIO.output(13, heartbeat)
-
-
-
-            if success_ratio >= 0 and success_ratio < 0.25:
-
-                GPIO.output(3, False)
-                GPIO.output(5, False)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.25 and success_ratio < 0.5:
-
-                GPIO.output(3, True)
-                GPIO.output(5, False)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.5 and success_ratio < 0.75:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, False)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.75 and success_ratio < 0.9:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, False)
-
-            elif success_ratio >= 0.9 and success_ratio <= 1:
-
-                GPIO.output(3, True)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, True)
-
-            else:
-
-                GPIO.output(3, False)
-                GPIO.output(5, True)
-                GPIO.output(7, True)
-                GPIO.output(11, False)
+			gpioGen.update(success_ratio)
 
 
-        print(end_result)
-
-        t_collector.join()
-        #time.sleep(1)
-
-        print("\nFINISHED   \n\nActive threads: " + str(threading.activeCount()) + "\nIterations: " +  str(iteration_counter) + "\nSamples processed: " + str(frame_size*stop_at) + "\nPreambles detected: " + str(preamble_detections) + "\nSucesses: " + str(sucesses) + "\nFlipped Sucesses: " + str(flipped_sucesses) + "\nSuccess: " +str(success_ratio) + "\nRuntime: "  +  str(round(time.time() -t, 3)) )
-
-        print('Debug value is ' + str(debug))
-        print('Loop value is ' + str(args['infi']))
+########################################################################
+### VERBOSE
+########################################################################
+		
 
 
-        if debug == True:
-            save('outfile_samples', allsamples)
-            save('outfile_signal', end_result)
-            save('outfile_SPB', samples_per_bit)
+		runtime = round(time.time() -t, 3)
+		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) + "\nFlipped Sucesses: 	" + str(flipped_sucesses) + "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(max_sucesses / max(temporal_window,runtime), 2) ))
 
-        iteration_counter += 1
-        if iteration_counter >= args['itnum']:
-            infinite_loop = False
-
-        infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
+		print('Debug value is ' + str(debug))
+		print('Loop value is ' + str(args['infi']))
 
 
+########################################################################
 
 
-    sys.exit(main(sys.argv))
+		iteration_counter += 1
+		if iteration_counter >= args['itnum']:
+			infinite_loop = False
+
+		infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
+
+	sys.exit(main(sys.argv))
