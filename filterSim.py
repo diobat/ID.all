@@ -4,6 +4,18 @@ import numpy as np
 
 
 samples = np.load("outfile_samples.npy")
+samples2 = np.load("samples2.npy")
+pre_filter = np.load('pre_filter.npy')
+post_filter = np.load('post_filter.npy')
+
+window = 65 * 50
+
+start = 849500
+start2 = start + 1000
+
+pre_filter = pre_filter[start:start+window]
+post_filter = post_filter[start2:start+window]
+
 
 sample_rate = 226000
 symbol_rate = 3650
@@ -27,7 +39,7 @@ w, h = signal.freqz(b, a)
 fig = plt.figure()
 
 
-ax1 = fig.add_subplot(211)
+ax1 = fig.add_subplot(221)
 
 plt.axvline(low_cutoff, color='green') # cutoff frequency
 plt.axvline(high_cutoff, color='green') # cutoff frequency
@@ -37,7 +49,7 @@ plt.psd(samples, NFFT=1024, Fs=sample_rate, Fc=0)
 
 
 
-ax2 = fig.add_subplot(212)
+ax2 = fig.add_subplot(222)
 plt.title('Digital filter frequency response')
 plt.plot(w*nyq_freq, h, 'k')
 plt.ylabel('Amplitude', color='k')
@@ -46,11 +58,23 @@ plt.xlabel('Frequency Hz')
 plt.xlim([0, high_cutoff*ratio])
 plt.axvline(low_cutoff, color='green')      # cutoff frequency
 plt.axvline(high_cutoff, color='green')     # cutoff frequency
-
+plt.grid()
 #ax2 = ax1.twinx()
 #angles = np.unwrap(np.angle(h))
 #plt.plot(w, angles, 'g')
 #plt.ylabel('Angle (radians)', color='g')
-plt.grid()
+
+ax3 = fig.add_subplot(223)
+plt.plot(pre_filter)
+plt.title('One packet pre filtering')
+plt.ylabel('Sample Index')
+plt.ylabel('Quantization')
+
+ax4 = fig.add_subplot(224)
+plt.plot(post_filter)
+plt.title('One packet post filtering')
+plt.ylabel('Sample Index')
+plt.ylabel('Quantization')
+
 #plt.axis('tight')
 plt.show()
