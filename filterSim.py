@@ -30,7 +30,7 @@ high_cutoff = 3600
 w1 = low_cutoff / nyq_freq          # For digital filters, Wn is normalized from 0 to 1, where 1 is the Nyquist frequency, pi radians/sample.
 w2 = high_cutoff / nyq_freq         # (Wn is thus in half-cycles / sample.)
 
-ratio = 10
+ratio = 5
 
 b, a = signal.butter(filter_order, [w1, w2] , 'bandpass')
 w, h = signal.freqz(b, a)
@@ -44,7 +44,7 @@ plt.title('Bandpass over Power Spectral Density')
 plt.axvline(low_cutoff, color='green') # cutoff frequency
 plt.axvline(high_cutoff, color='green') # cutoff frequency
 plt.xlim([0, high_cutoff*ratio])
-plt.psd(samples, NFFT=1024, Fs=sample_rate, Fc=0)
+plt.psd(samples2, NFFT=4096, Fs=sample_rate, Fc=0)
 
 
 
