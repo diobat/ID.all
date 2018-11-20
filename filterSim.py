@@ -8,13 +8,13 @@ samples2 = np.load("samples2.npy")
 pre_filter = np.load('pre_filter.npy')
 post_filter = np.load('post_filter.npy')
 
-window = 65 * 50
+window = 65 * 40
 
-start = 849500
-start2 = start + 1000
+start = 167000
+start2 = 452500
 
 pre_filter = pre_filter[start:start+window]
-post_filter = post_filter[start2:start+window]
+post_filter = post_filter[start2:start2+window]
 
 
 sample_rate = 226000
@@ -40,7 +40,7 @@ fig = plt.figure()
 
 
 ax1 = fig.add_subplot(221)
-
+plt.title('Bandpass over Power Spectral Density')
 plt.axvline(low_cutoff, color='green') # cutoff frequency
 plt.axvline(high_cutoff, color='green') # cutoff frequency
 plt.xlim([0, high_cutoff*ratio])
@@ -67,13 +67,13 @@ plt.grid()
 ax3 = fig.add_subplot(223)
 plt.plot(pre_filter)
 plt.title('One packet pre filtering')
-plt.ylabel('Sample Index')
+plt.xlabel('Sample Index')
 plt.ylabel('Quantization')
 
 ax4 = fig.add_subplot(224)
 plt.plot(post_filter)
 plt.title('One packet post filtering')
-plt.ylabel('Sample Index')
+plt.xlabel('Sample Index')
 plt.ylabel('Quantization')
 
 #plt.axis('tight')
