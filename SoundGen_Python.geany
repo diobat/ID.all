@@ -28,15 +28,16 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=8
-FILE_NAME_0=2412;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FSoundGen.py;0;4
-FILE_NAME_1=1667;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSample_collection.py;0;4
-FILE_NAME_2=32;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FPBZ_comparator.py;0;4
-FILE_NAME_3=727;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FfilterGen.py;0;4
-FILE_NAME_4=367;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FDEEP_comparator.py;0;4
-FILE_NAME_5=1698;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FparseGen.py;0;4
-FILE_NAME_6=608;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FfileGen.py;0;4
-FILE_NAME_7=169;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FgpioGen.py;0;4
+current_page=0
+FILE_NAME_0=6691;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FSoundGen.py;0;4
+FILE_NAME_1=297;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FPBZ_comparator.py;0;4
+FILE_NAME_2=1303;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FparseGen.py;0;4
+FILE_NAME_3=1667;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSample_collection.py;0;4
+FILE_NAME_4=5789;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FPBZS_comparator.py;0;4
+FILE_NAME_5=610;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FfileGen.py;0;4
+FILE_NAME_6=1767;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FreadGen.py;0;4
+FILE_NAME_7=500;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FfilterGen.py;0;4
+FILE_NAME_8=373;Python;0;EUTF-8;1;1;0;%2Fhome%2Fpi%2FProjects%2FSoundGen_Python%2FDEEP_comparator.py;0;4
 
 [VTE]
 last_dir=/home/pi

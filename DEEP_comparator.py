@@ -14,7 +14,7 @@ debug2 = False	# Should a global timestamp be printed?
 
 def compare_signal(signal, samples_per_bit):
 	
-	s
+	
 	signal_ceil = max(signal)
 	signal_floor = min(signal)
 	#print("\n\namplitude" + str(signal_ceil - signal_floor) + "\n\n")

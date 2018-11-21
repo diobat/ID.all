@@ -30,22 +30,30 @@ def binary_parse(symbol_list, preamble, packet_size, payload_size):
 	#	if flipped_symbol_list[x:x+len(desired_result)] == desired_result:
 	#		flipped_sucesses += 1
 
+	xv = [0]
 
-
-	for x in range(len(symbol_list) - len(preamble)):														# Detects preambles
+	for x in range(len(symbol_list) - packet_size) :
+													# Detects preambles
 		if symbol_list[x:x+len(preamble)] == preamble:
 			preamble_detections += 1                                										# Counts them
-			if crc_check(symbol_list[x+len(preamble):x+packet_size-1],CRC_divisor):             			# Checks for parity in the whole packet, soon to be replaced by CRC
-				message_result.append(symbol_list[x+len(preamble):x+len(preamble)+payload_size])        	# If validaded adds to the output batch
-				sucesses += 1
-					
+			if crc_check(symbol_list[x+len(preamble):x+packet_size-1],CRC_divisor):     			
+				validated_payload =  symbol_list[x+len(preamble):x+len(preamble)+payload_size]
+				#print(str(x) + ' : ' + str(validated_payload))			
+				
+				if x > (max(xv) + packet_size+5):
+					xv.append(x)
+					message_result.append(validated_payload)											        	# If validaded adds to the output batch
+					sucesses += 1
+				
+
+		
 	return message_result, sucesses, flipped_sucesses, preamble_detections
 
 def crc_check(payload_crc, binary_divisor):	#CRC validation
 	
 	#print("payload + crc = " + str(payload_crc))
 	
-	validity = [ 0 for x in range(len(binary_divisor)-1)]
+	validity = [0 for x in range(len(binary_divisor)-1)]
 
 	for x in range(len(payload_crc) - (len(binary_divisor)-1)):			# For an indepth explanation of this function visit the wikipedia page: Cyclic Redundancy Check
 		if payload_crc[x] == 1:
@@ -55,8 +63,8 @@ def crc_check(payload_crc, binary_divisor):	#CRC validation
 	#print("FINAL CRC = " + str(payload_crc[-4:-1]))
 	#print("validity = " + str(validity))
 
-	#return payload_crc[-4:-1] == validity
-	return True
+	return payload_crc[-4:-1] == validity
+	#return True
 
 
 def parityOf(int_type): 							#Parity validation

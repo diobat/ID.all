@@ -14,8 +14,8 @@ def save_payload(message_result, debug_value, allsamples, end_result, samples_pe
 		np.save('outfile_signal', end_result)
 		np.save('outfile_SPB', samples_per_symbol)
 	
-	if not os.path.isdir(".outputs"):				#If the outputs folder does not exist, it will create it.
-		os.makedirs(".outputs")
+	if not os.path.isdir("./outputs"):				#If the outputs folder does not exist, it will create it.
+		os.makedirs("./outputs")
 	
 	output_list = os.listdir("./outputs")
 

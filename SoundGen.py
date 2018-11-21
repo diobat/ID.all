@@ -158,16 +158,16 @@ if __name__ == "__main__":
 
 				this_frame = sample_FIFO.get_nowait()
 				
-				this_frame =  filterGen.bp_butter(this_frame, [15, 3600], 2, sdr.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
+				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, sdr.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
 				if decimation_factor > 1:
 					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1	
 
 				
-				this_frame = this_frame[int(12500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
+				this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
 
-				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 		#Deep Demodulation
+				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 							#Deep Demodulation
 				demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)							#PBZ Demodulation
 				
 				end_result.extend(demod_signal)							# The comparator's output is concatenated to the array end_result

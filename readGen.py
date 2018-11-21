@@ -63,7 +63,7 @@ def update(i):
 	plt.xticks(rotation = 45)
 	plt.xlabel('Payloads')
 	plt.ylabel('Number of repetitions')
-	plt.ylim([0, 150])
+	plt.ylim([0, 100])
 	
 	
 	
