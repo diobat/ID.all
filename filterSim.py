@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-samples = np.load("outfile_samples.npy")
-samples2 = np.load("samples2.npy")
+#samples = np.load("outfile_samples.npy")
+samples2 = np.load("PBZS_stage1.npy")
 pre_filter = np.load('pre_filter.npy')
 post_filter = np.load('post_filter.npy')
 
