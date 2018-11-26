@@ -14,7 +14,7 @@ import threading		#Multi-threading
 import RPi.GPIO as GPIO	#LED's
 import array
 import sys
-import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, gpioGen		#demodulating library
+import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, gpioGen, classGen		#demodulating library
 import time				#time deltas
 import argparse			#argumment management
 #import scipy.signal
@@ -53,44 +53,21 @@ sdr = RtlSdr()
 # configure SDR device
 sdr.sample_rate = int(args['samp'])						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
 sdr.center_freq = args['freq']
-#sdr.gain = 'auto'
 sdr.gain = args['gain']
 
+#Signal characteristics
+Signal = classGen.Signal(args['samp'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, False)		# sample_rate, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
-global frame_size
-frame_size = args['sfram']
-
-
-#signal characteristics
-
-decimation_factor = 1		 							# It might be possible to increase efficiency by decimating the signal before it gets passed along to the pdata library, paceholder for now
-symbol_rate = args['symb']								# Baseband frequency of the desired signal it should be no higher than one tenth of the SDR kit sampling rate
-
-symbol_period = 1/symbol_rate
-samples_per_symbol = (sdr.sample_rate * symbol_period) / decimation_factor	# How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
-
-
-preamble = [1,0,1,0]									# This is the sequence of bits that the program will interpret as the start of a packet
-
-payload_size = 8										# The information part of the packet consists of 2 hexadecimal chars, 8 bits
-packet_size = len(preamble) + payload_size + 4				# Parity + 2 hexa chars + 3 CRC bits + 2 stop bits
-
-
-buffer_size = 0  										# Size of the FIFO (in bits) where the samples are stored between harvesting and plotting, zero means infinite size
-global sample_FIFO
-sample_FIFO = queue.Queue(buffer_size)
-
+#Packet characteristics
+Packet = classGen.Packet([1,0,1,0], 8, 3, 1)										# Preamble, payload_size, CRC size, STOP bits size
 
 ## Flow control
-
-global iteration_counter, stop_at, debug
+global iteration_counter, debug
 iteration_counter = 0									# Counts the number of frames collected so far
-stop_at = args['nfram']									# How many frames of data the program will collect and process before it ends
 infinite_loop = True									# Flag that controls wether the program will leave the main loop
 debug = args['dbug']									# Debug capabilities switch
 
 ## Led Setup
-
 USE_LEDS = True
 heartbeat = True
 
@@ -104,7 +81,6 @@ GPIO.setup(13, GPIO.OUT)
 
 
 ## Debugging variables
-
 allsamples = array.array('f',[0])
 
 
@@ -114,24 +90,11 @@ allsamples = array.array('f',[0])
 
 
 
-def collectData(): 	#Collect samples
-
-	global frame_size
-	global stop_at
-	frame_counter = 0
-	t = time.time()
-	while frame_counter < stop_at :
-		samples = sdr.read_samples(frame_size)
-		samples2 = abs(samples)
-		sample_FIFO.put_nowait(samples2)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO		
-        #print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*stop_at)/sdr.sample_rate, 2)) + "   ###\n")
-		frame_counter += 1
-
-
 def threadInit():	#Initialize threads
 	global t_collector
-	t_collector = threading.Thread(target=collectData, name="Collector", args=[])
-
+	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
+	t_collector.start()
 
 
 if __name__ == "__main__":
@@ -139,38 +102,33 @@ if __name__ == "__main__":
 	while infinite_loop == True:
 		t = time.time()
 
-		threadInit()  # Initialize the required threads.
+		threadInit()  # Initialize the data source required threads.
 
-		t_collector.start()
-
-		end_result = []
-		iteration_end = False        # At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
+		Signal.demod_signal = []		# Flush the previous iteration's demodulation
+		iteration_end = False       	# At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
-		
-		
-		while sample_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
+
+		while Signal.samples.empty == True:   # Wait until there is at least 1 item in the FIFO
 			pass
 
-		while t_collector.isAlive() or sample_FIFO.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
+		while t_collector.isAlive() or Signal.samples.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
 
 
-			if sample_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
+			if Signal.samples.empty() == False: # Are there any samples in the harvesting FIFO?
 
-				this_frame = sample_FIFO.get_nowait()
-				
-				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, sdr.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
+				this_frame = Signal.samples.get_nowait()
+				this_frame = this_frame[5:-1]
+				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
 				if decimation_factor > 1:
-					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1	
+					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
-				
-				this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
+				#Fix this by removing the first sample earlier?
+				#this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
+				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 								#Deep Demodulation
 
-				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 							#Deep Demodulation
-				demod_signal = PBZ_comparator.compare_signal(this_frame, samples_per_symbol)							#PBZ Demodulation
-				
-				end_result.extend(demod_signal)							# The comparator's output is concatenated to the array end_result
+				Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, samples_per_symbol))							# The comparator's output is concatenated to the array end_result
 
 
 				if debug == True:
@@ -182,7 +140,7 @@ if __name__ == "__main__":
 ### INFORMATION PARSING
 ########################################################################
 
-		message_result, sucesses, flipped_sucesses, preamble_detections = parseGen.binary_parse(end_result, preamble , packet_size , payload_size)
+		message_result, sucesses, preamble_detections = parseGen.binary_parse(Signal.demod_signal, Packet.preamble , Packet.packet_size , Packet.payload_size)
 
 
 ########################################################################
@@ -190,19 +148,19 @@ if __name__ == "__main__":
 ########################################################################
 
 
-		fileGen.save_payload(message_result, debug, allsamples, end_result, samples_per_symbol)
-		
-		
+		fileGen.save_payload(message_result, debug, allsamples, Signal.demod_signal, Signal.samples_per_symbol)
+
+
 ########################################################################
 ### RPI GPIO UPDATING
 ########################################################################
-		
-		
-		temporal_window = (1/sdr.sample_rate)*frame_size				
-		packet_starts_t_delta = 0.0152									# Time in seconds between start of consecutive packets,
-			
+
+
+		temporal_window = (1/Signal.sample_rate)*Signal.frame_size
+		Signal.silence_time = 0.0152									# Time in seconds between start of consecutive packets,
+
 		max_sucesses = max(sucesses, flipped_sucesses)
-		success_ratio = max_sucesses / (temporal_window/packet_starts_t_delta) 
+		success_ratio = max_sucesses / (temporal_window/Signal.silence_time)
 
 		if USE_LEDS == True:
 
@@ -212,7 +170,7 @@ if __name__ == "__main__":
 ########################################################################
 ### VERBOSE
 ########################################################################
-		
+
 
 
 		runtime = round(time.time() -t, 3)
