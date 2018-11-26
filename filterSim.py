@@ -37,11 +37,12 @@ w2 = high_cutoff / nyq_freq         # (Wn is thus in half-cycles / sample.)
 ratio = 5
 
 b, a = signal.butter(filter_order, [w1, w2] , 'bandpass')
-w, h = signal.freqz(b, a)
+w, h = signal.freqz(b, a, worN = sample_rate)
 
 
 fig = plt.figure()
 
+fig.suptitle('Python filter simulator', fontsize=16)
 
 ax1 = fig.add_subplot(221)
 plt.title('Bandpass over Power Spectral Density')
@@ -56,7 +57,7 @@ plt.legend(['FcL','FcH','Pre-Filter', 'Post-Filter'])
 
 
 ax2 = fig.add_subplot(222)
-plt.title('Digital filter frequency response')
+plt.title('Digital filter frequency response - Order: ' + str(filter_order))
 plt.plot(w*nyq_freq, h, 'k')
 plt.ylabel('Amplitude', color='k')
 plt.xlabel('Frequency Hz')
