@@ -21,21 +21,21 @@ class Signal:
 
 
 
-    def collect_data(self):
+    def collect_data(self, SDR):
 
     	frame_counter = 0
     	while frame_counter < self.frames_per_iteration :
-    		samples = abs(sdr.read_samples(Signal.frame_size))
-    		Signal.samples_FIFO.put_nowait(samples)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+    		samples = abs(SDR.read_samples(Signal.frame_size))
+    		self.samples_FIFO.put_nowait(samples)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
     		frame_counter += 1
-    	#print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*frames_per_iteration)/sdr.sample_rate, 2)) + "   ###\n")
+    	#print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*frames_per_iteration)/SDR.sample_rate, 2)) + "   ###\n")
 
     def generate_data(self, Packet):
 
     	frame_counter = 0
     	while frame_counter < self.frames_per_iteration :
     		samples = simGen.genr_samples(self, Packet)
-    		Signal.samples_FIFO.put_nowait(samples)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+    		self.samples_FIFO.put_nowait(samples)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
     		frame_counter += 1
 
 
@@ -43,9 +43,11 @@ class Signal:
 
 
 class Packet:
-    def __init__(self, preamble, payload_size, CRC_len, STOP_len):
-		self.preamble = preamble#[1,0,1,0]
-		self.payload_size =  payload_size#8
-        self.CRC_len = CRC_len#3
-        self.STOP_len = STOP_len#1
-		self.packet_size = len(self.preamble) + self.payload_size + self.CRC_len + self.STOP_len
+    def __init__(self, preamble, payload_size, CRC_divisor, STOP_bits):
+        self.preamble = preamble#[1,0,1,0]
+        self.payload_size =  payload_size#8
+        self.CRC_divisor = CRC_divisor#[1,0,1,0]
+        self.CRC_len = len(self.CRC_divisor) -1
+        self.STOP_bits = STOP_bits
+        self.STOP_len = len(self.STOP_bits)
+        self.packet_size = len(self.preamble) + self.payload_size + self.CRC_len + self.STOP_len

@@ -51,6 +51,19 @@ def crc_check(payload_crc, binary_divisor):	#CRC validation
 	#return True
 
 
+def crc_make(payload, binary_divisor):
+
+	validity = [0 for x in range(len(binary_divisor)-1)]
+	payload_crc = payload
+	payload_crc.extend(validity)
+
+	for x in range(len(payload_crc) - (len(binary_divisor)-1)):			# For an indepth explanation of this function visit the wikipedia page: Cyclic Redundancy Check
+		if payload_crc[x] == 1:
+			for y in range(len(binary_divisor)-1):
+				payload_crc[x+y] = payload_crc[x+y] ^ binary_divisor[y]		# ^ = XOR
+
+	return payload_crc[-4:-1]
+
 def parityOf(int_type): 							#Parity validation
 
 

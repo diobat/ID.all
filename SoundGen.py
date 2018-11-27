@@ -7,14 +7,15 @@
 	# Issues with numpy module? On terminal: pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
 
 from pylab import *   	#Graphical capabilities, network and debug outfiles
-from rtlsdr import *	#SDR
+#from rtlsdr import *	#SDR
 from scipy import signal #Signal Filtering
 import queue			#FIFO/queue
 import threading		#Multi-threading
-import RPi.GPIO as GPIO	#LED's
+#import RPi.GPIO as GPIO	#LED's
 import array
 import sys
-import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, gpioGen, classGen		#demodulating library
+import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, classGen		#demodulating library
+#import gpioGen
 import time				#time deltas
 import argparse			#argumment management
 #import scipy.signal
@@ -48,18 +49,18 @@ print(args)
 
 
 # Initialize SDR kit
-sdr = RtlSdr()
+#SDR = RtlSdr()
 
 # configure SDR device
-sdr.sample_rate = int(args['samp'])						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
-sdr.center_freq = args['freq']
-sdr.gain = args['gain']
+#SDR.sample_rate = int(args['samp'])						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+#SDR.center_freq = args['freq']
+#SDR.gain = args['gain']
 
 #Signal characteristics
-Signal = classGen.Signal(args['samp'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, False)		# sample_rate, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['samp'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, True)		# sample_rate, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
-Packet = classGen.Packet([1,0,1,0], 8, 3, 1)										# Preamble, payload_size, CRC size, STOP bits size
+Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
 
 ## Flow control
 global iteration_counter, debug
@@ -68,16 +69,16 @@ infinite_loop = True									# Flag that controls wether the program will leave 
 debug = args['dbug']									# Debug capabilities switch
 
 ## Led Setup
-USE_LEDS = True
+USE_LEDS = False
 heartbeat = True
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(3, GPIO.OUT)
-GPIO.setup(5, GPIO.OUT)
-GPIO.setup(7, GPIO.OUT)
-GPIO.setup(11, GPIO.OUT)
-GPIO.setup(13, GPIO.OUT)
+#GPIO.setwarnings(False)
+#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(3, GPIO.OUT)
+#GPIO.setup(5, GPIO.OUT)
+#GPIO.setup(7, GPIO.OUT)
+#GPIO.setup(11, GPIO.OUT)
+#GPIO.setup(13, GPIO.OUT)
 
 
 ## Debugging variables
@@ -92,7 +93,7 @@ allsamples = array.array('f',[0])
 
 def threadInit():	#Initialize threads
 	global t_collector
-	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[SDR])
 	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
 	t_collector.start()
 
@@ -108,19 +109,19 @@ if __name__ == "__main__":
 		iteration_end = False       	# At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
 
-		while Signal.samples.empty == True:   # Wait until there is at least 1 item in the FIFO
+		while Signal.samples_FIFO.empty == True:   # Wait until there is at least 1 item in the FIFO
 			pass
 
-		while t_collector.isAlive() or Signal.samples.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
+		while t_collector.isAlive() or Signal.samples_FIFO.empty() == False:  	# Cycle until collector thread is alive OR FIFO isn't empty
 
 
-			if Signal.samples.empty() == False: # Are there any samples in the harvesting FIFO?
+			if Signal.samples_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-				this_frame = Signal.samples.get_nowait()
+				this_frame = Signal.samples_FIFO.get_nowait()
 				this_frame = this_frame[5:-1]
 				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
-				if decimation_factor > 1:
+				if Signal.decimation_factor > 1:
 					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
 				#Fix this by removing the first sample earlier?
@@ -128,7 +129,7 @@ if __name__ == "__main__":
 
 				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 								#Deep Demodulation
 
-				Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, samples_per_symbol))							# The comparator's output is concatenated to the array end_result
+				Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, Signal.samples_per_symbol))							# The comparator's output is concatenated to the array end_result
 
 
 				if debug == True:
@@ -159,12 +160,12 @@ if __name__ == "__main__":
 		temporal_window = (1/Signal.sample_rate)*Signal.frame_size
 		Signal.silence_time = 0.0152									# Time in seconds between start of consecutive packets,
 
-		max_sucesses = max(sucesses, flipped_sucesses)
-		success_ratio = max_sucesses / (temporal_window/Signal.silence_time)
 
-		if USE_LEDS == True:
+		success_ratio = sucesses / (temporal_window/Signal.silence_time)
 
-			gpioGen.update(success_ratio)
+		#if USE_LEDS == True:
+
+			#gpioGen.update(success_ratio)
 
 
 ########################################################################
@@ -174,7 +175,7 @@ if __name__ == "__main__":
 
 
 		runtime = round(time.time() -t, 3)
-		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) + "\nFlipped Sucesses: 	" + str(flipped_sucesses) + "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(max_sucesses / max(temporal_window,runtime), 2) ))
+		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
 
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
