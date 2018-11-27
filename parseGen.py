@@ -44,10 +44,10 @@ def crc_check(payload_crc, binary_divisor):	#CRC validation
 			for y in range(len(binary_divisor)-1):
 				payload_crc[x+y] = payload_crc[x+y] ^ binary_divisor[y]		# ^ = XOR
 
-	#print("FINAL CRC = " + str(payload_crc[-4:-1]))
+	#print("FINAL CRC = " + str(payload_crc[-3:]))
 	#print("validity = " + str(validity))
 
-	return payload_crc[-4:-1] == validity
+	return payload_crc[-3:] == validity
 	#return True
 
 
@@ -62,7 +62,7 @@ def crc_make(payload, binary_divisor):
 			for y in range(len(binary_divisor)-1):
 				payload_crc[x+y] = payload_crc[x+y] ^ binary_divisor[y]		# ^ = XOR
 
-	return payload_crc[-4:-1]
+	return payload_crc[-3:]
 
 def parityOf(int_type): 							#Parity validation
 

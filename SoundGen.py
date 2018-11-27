@@ -127,9 +127,9 @@ if __name__ == "__main__":
 				#Fix this by removing the first sample earlier?
 				#this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
-				#demod_signal = DEEP_comparator.compare_signal(this_frame, samples_per_symbol) 								#Deep Demodulation
+				#demod_signal = DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol) 								#Deep Demodulation
 
-				Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, Signal.samples_per_symbol))							# The comparator's output is concatenated to the array end_result
+				Signal.demod_signal.extend(DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol))							# The comparator's output is concatenated to the array end_result
 
 
 				if debug == True:
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
 
 		runtime = round(time.time() -t, 3)
-		print("\nFINISHED   \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
+		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
 
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))

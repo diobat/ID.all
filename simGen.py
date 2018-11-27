@@ -1,6 +1,7 @@
 import random
 import matplotlib.pyplot as plt
 import parseGen
+import numpy as np
 
 #payloads = ([1,1,1,0,0,1,0,0], [1,1,0,0,0,1,1,1], [1,1,1,1,1,1,1,1], [0,0,0,0,0,0,0,0], [1,1,1,0,0,1,0,1], [0,0,0,0,0,0,1,0])
 
@@ -34,7 +35,17 @@ def genr_samples(Signal, Packet):
 
         fake_signal.extend([0] * Signal.silence_samples)
 
+        #print(payload_index)
+        #print(payloads[payload_index])
+        #print(CRC)
 
+    noise = np.random.normal(0,0.1,len(fake_signal))
+    # args:
+    # first is the mean of the normal distribution you are choosing from
+    # second is the standard deviation of the normal distribution
+    # third is the number of elements you get in array noise
+
+    fake_signal += noise
 
     #plt.plot(fake_signal)
     #plt.show()
