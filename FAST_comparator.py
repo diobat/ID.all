@@ -24,6 +24,7 @@ def compare_signal(signal, samples_per_bit, Packet):
     this_packet = []
 
     packet_size_samples = Packet.packet_size * SPB
+<<<<<<< Updated upstream
     max_index = len(signal) - packet_size_samples
     window = int(SPB * 2.5)
     windowz = [0] * window
@@ -46,4 +47,36 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 
     #plt.show()
+=======
+    cooldown = -1 * packet_size_samples
+
+    signal_amplitude = max(signal) - min(signal)
+
+    signal_zero_centered = [(x * 2 - signal_amplitude) for x in signal]
+    signal_zero_centered = signal_zero_centered[0:-packet_size_samples]
+    transitions = np.where(np.diff(np.signbit(signal_zero_centered)))[0]
+
+    RPrP = []       #Relative preamble harvest positions
+    RPaP = []       #Relative payload harvest positions
+
+    y = int(SPB/2)
+    for w in range(Packet.preamble_len):
+        RPrP.append((w*SPB)+y)
+
+    for w in range(Packet.packet_size):
+        RPaP.append((w*SPB)+y)
+
+    print(transitions)
+    for x in transitions:
+        match = True
+        for i in range(len(RPrP)):
+            match = match and (signal[x + RPrP[i]] == Packet.preamble[i])
+        if match == True and x - cooldown > packet_size_samples:
+            for i in range(len(RPaP)):
+                position = x + RPaP[i]
+                position2 = int(position/SPB)
+                end_result[position2] = signal[position]
+            cooldown = i
+
+>>>>>>> Stashed changes
     return end_result
