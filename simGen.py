@@ -48,6 +48,6 @@ def genr_samples(Signal, Packet):
     fake_signal += noise
 
     #plt.plot(fake_signal)
-    #plt.show()
+    #7plt.show()
 
     return fake_signal[1:Signal.frame_size]

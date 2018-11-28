@@ -45,9 +45,10 @@ class Signal:
 class Packet:
     def __init__(self, preamble, payload_size, CRC_divisor, STOP_bits):
         self.preamble = preamble#[1,0,1,0]
+        self.preamble_len = len(self.preamble)
         self.payload_size =  payload_size#8
         self.CRC_divisor = CRC_divisor#[1,0,1,0]
         self.CRC_len = len(self.CRC_divisor) -1
         self.STOP_bits = STOP_bits
         self.STOP_len = len(self.STOP_bits)
-        self.packet_size = len(self.preamble) + self.payload_size + self.CRC_len + self.STOP_len
+        self.packet_size = self.preamble_len + self.payload_size + self.CRC_len + self.STOP_len

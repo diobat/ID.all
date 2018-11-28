@@ -14,7 +14,7 @@ import threading		#Multi-threading
 #import RPi.GPIO as GPIO	#LED's
 import array
 import sys
-import DEEP_comparator, PBZ_comparator, filterGen, parseGen, fileGen, classGen		#demodulating library
+import DEEP_comparator, PBZ_comparator, FAST_comparator, filterGen, parseGen, fileGen, classGen		#demodulating library
 #import gpioGen
 import time				#time deltas
 import argparse			#argumment management
@@ -35,6 +35,7 @@ parser.add_argument('-it','--itnum', help='Number of iterations before program e
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
 parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
 parser.add_argument('-sym','--symb', help='Symbol Rate of expected ASK signal', type=int, required=True, default = 3650)
+parser.add_argument('-cp', '--comp', help='Comparator (DEEP, PBZ, FAST). See docs for details', type=str, required=False, default='FAST')
 args = vars(parser.parse_args())
 
 #args['freq'] will contain the value of arg '-f'
@@ -122,15 +123,21 @@ if __name__ == "__main__":
 				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
 				if Signal.decimation_factor > 1:
-					 this_frame = signal.decimate(this_frame, decimation_factor)				# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
+					 this_frame = signal.decimate(this_frame, decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
 				#Fix this by removing the first sample earlier?
 				#this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
 				#demod_signal = DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol) 								#Deep Demodulation
 
-				Signal.demod_signal.extend(DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol))							# The comparator's output is concatenated to the array end_result
-
+				st = time.time()
+				if args['comp'] == 'FAST':
+					Signal.demod_signal.extend(FAST_comparator.compare_signal(this_frame, Signal.samples_per_symbol, Packet))
+				elif args['comp'] == 'PBZ':
+					Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, Signal.samples_per_symbol))	# The comparator's output is concatenated to the array end_result
+				else:
+					Signal.demod_signal.extend(DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol))
+				delta_st = time.time() - st
 
 				if debug == True:
 					allsamples.extend(this_frame)           			# Keep storing samples for later dump if demod is activated
@@ -172,13 +179,17 @@ if __name__ == "__main__":
 ### VERBOSE
 ########################################################################
 
-
+		harvest_time = Signal.frame_size/Signal.sample_rate
 
 		runtime = round(time.time() -t, 3)
 		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
-
+		print('Ideal harvest time:	' + str(round(harvest_time,3)))
+		print('Comparator runtime:	' + str(round(delta_st, 3)))
+		print('Deafness period:	' + str(round(harvest_time/delta_st, 3)))
+		print('\n\nActive comparator is ' + args['comp'])
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
+
 
 
 ########################################################################
