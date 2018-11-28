@@ -185,7 +185,7 @@ if __name__ == "__main__":
 		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
 		print('Ideal harvest time:	' + str(round(harvest_time,3)))
 		print('Comparator runtime:	' + str(round(delta_st, 3)))
-		print('Deafness period:	' + str(round(harvest_time/delta_st, 3)))
+		print('Deafness period:	' + str(round(max(1-(harvest_time/delta_st),0), 3)))
 		print('\n\nActive comparator is ' + args['comp'])
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
