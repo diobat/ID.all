@@ -20,6 +20,7 @@ import time				#time deltas
 import argparse			#argumment management
 #import scipy.signal
 
+
 ########################################################################
 ### PARSING INPUT ARGUMENTS
 ########################################################################
@@ -58,7 +59,7 @@ print(args)
 #SDR.gain = args['gain']
 
 #Signal characteristics
-Signal = classGen.Signal(args['samp'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, True)		# sample_rate, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['freq'], args['samp'], args['gain'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
 Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
@@ -94,8 +95,8 @@ allsamples = array.array('f',[0])
 
 def threadInit():	#Initialize threads
 	global t_collector
-	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[SDR])
-	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
+	t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	#t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
 	t_collector.start()
 
 
@@ -118,10 +119,20 @@ if __name__ == "__main__":
 
 			if Signal.samples_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
-				this_frame = Signal.samples_FIFO.get_nowait()
-				this_frame = this_frame[5:-1]
+				this_frame1 = Signal.samples_FIFO.get_nowait()
+				this_frame1 = this_frame1[2000:-1]
+				
+				#this_frame = [(x-this_frame1[0]) for x in this_frame1]
+				
+				#plt.subplot(211)
+				#plt.plot(this_frame)
+				
 				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
-
+				
+				#plt.subplot(212)
+				#plt.plot(this_frame)
+				#plt.show
+				
 				if Signal.decimation_factor > 1:
 					 this_frame = signal.decimate(this_frame, decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 

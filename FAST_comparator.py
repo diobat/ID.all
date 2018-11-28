@@ -2,7 +2,7 @@
 
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import time
 
 
@@ -47,6 +47,9 @@ def compare_signal(signal, samples_per_bit, Packet):
 					position2 = int(position/SPB)
 					end_result[position2] = binary_threshold(signal[position], threshold)
 				cooldown = i
+				
+	#plt.plot(signal)
+	#plt.show()
 
 	return end_result
 	
