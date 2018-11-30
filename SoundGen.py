@@ -95,8 +95,8 @@ allsamples = array.array('f',[0])
 
 def threadInit():	#Initialize threads
 	global t_collector
-	t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
-	#t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
+	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
 	t_collector.start()
 
 
@@ -121,18 +121,18 @@ if __name__ == "__main__":
 
 				this_frame1 = Signal.samples_FIFO.get_nowait()
 				this_frame = this_frame1[2000:-1]
-				
+
 				#this_frame = [(x-this_frame1[0]) for x in this_frame1]
-				
+
 				#plt.subplot(211)
 				#plt.plot(this_frame)
-				
+
 				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
-				
+
 				#plt.subplot(212)
 				#plt.plot(this_frame)
 				#plt.show
-				
+
 				if Signal.decimation_factor > 1:
 					 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
