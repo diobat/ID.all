@@ -1,6 +1,7 @@
 import queue			#FIFO/queue
 import simGen           #The ability to simulate a signal
 import rtlsdr			#SDR
+import time				# measuring the harvest duration
 
 class Signal:
 
@@ -29,13 +30,14 @@ class Signal:
 		
 
 	def collect_data(self):
-
+		q = time.time()
 		frame_counter = 0
 		while frame_counter < self.frames_per_iteration :
 			samples = abs(self.SDR.read_samples(self.frame_size))
 			self.samples_FIFO.put_nowait(samples)  ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 			frame_counter += 1
 			#print("\n###   TERMINEI A RECOLHA DE AMOSTRAS EM " + str(round(time.time() -t, 2)) + ". TEMPO IDEAL = " +str(round((frame_size*frames_per_iteration)/SDR.sample_rate, 2)) + "   ###\n")
+		self.harvest_delta = time.time() - q
 
 	def generate_data(self, Packet):
 

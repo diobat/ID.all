@@ -12,7 +12,8 @@ def compare_signal(signal, samples_per_bit, Packet):
 	t = time.time()
 
 	SPB = int(samples_per_bit)
-	threshold =  max(signal)/2
+	ratio = 0.3
+	threshold =  max(signal)*ratio
 	
 	index = -1
 	end_result = [0] * int(len(signal)/SPB)
@@ -27,7 +28,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 	transitions = np.where(np.diff(np.signbit(signal_zero_centered)))[0]
 
 	RPrP = []       #Relative preamble harvest positions
-	RPaP = []       #Relative payload harvest positions
+	RPaP = []       #Relative packet harvest positions
 
 	y = int(SPB/2)
 	for w in range(Packet.preamble_len):
@@ -35,9 +36,14 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 	for w in range(Packet.packet_size):
 		RPaP.append((w*SPB)+y)
+		
+	real_transitions = []
+	#print(SPB)
+	#print(RPaP)
 
 	for x in transitions:
 		if x - cooldown > packet_size_samples:
+			real_transitions.append(x)
 			preamble_match = []
 			for i in range(len(RPrP)):
 				preamble_match.append(binary_threshold(signal[x + RPrP[i]],threshold))
@@ -48,8 +54,24 @@ def compare_signal(signal, samples_per_bit, Packet):
 					end_result[position2] = binary_threshold(signal[position], threshold)
 				cooldown = i
 				
-	#plt.plot(signal)
-	#plt.show()
+	plt.plot(signal)
+
+	POC = []  # Points of collection
+	for y in real_transitions:
+		for u in RPaP:
+			POC.append(y+u)
+	
+
+	t_threshold = [threshold] * len(real_transitions)
+	t2_signal = [(signal[x]) for x in POC]
+	
+	plt.scatter(real_transitions, t_threshold, color='black')
+	plt.scatter(POC, t2_signal, color='orange')
+	
+	plt.axhline(y= threshold, color='k')
+	plt.show()
+
+	
 
 	return end_result
 	

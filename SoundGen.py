@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo B
 parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=True)
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
-parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 320*1024)
+parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 160*1024)#320*1024)
 parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 			if Signal.samples_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
 				this_frame1 = Signal.samples_FIFO.get_nowait()
-				this_frame1 = this_frame1[2000:-1]
+				this_frame = this_frame1[2000:-1]
 				
 				#this_frame = [(x-this_frame1[0]) for x in this_frame1]
 				
@@ -134,10 +134,10 @@ if __name__ == "__main__":
 				#plt.show
 				
 				if Signal.decimation_factor > 1:
-					 this_frame = signal.decimate(this_frame, decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
+					 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
 				#Fix this by removing the first sample earlier?
-				#this_frame = this_frame[int(33500/decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
+				this_frame = this_frame[int(33500/Signal.decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
 				#demod_signal = DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol) 								#Deep Demodulation
 
@@ -190,13 +190,14 @@ if __name__ == "__main__":
 ### VERBOSE
 ########################################################################
 
-		harvest_time = Signal.frame_size/Signal.sample_rate
+		ideal_harvest_time = Signal.frame_size/Signal.sample_rate
 
 		runtime = round(time.time() -t, 3)
 		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
-		print('Ideal harvest time:	' + str(round(harvest_time,3)))
+		print('Ideal harvest time:	' + str(round(ideal_harvest_time,3)))
+		print('Real harvest time:	' + str(round(Signal.harvest_delta,3)))
 		print('Comparator runtime:	' + str(round(delta_st, 3)))
-		print('Deafness period:	' + str(round(max(1-(harvest_time/delta_st),0), 3)))
+		print('Deafness period:	' + str(round(max(1-(ideal_harvest_time/delta_st),0), 3)))
 		print('\n\nActive comparator is ' + args['comp'])
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
