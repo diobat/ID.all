@@ -95,8 +95,8 @@ allsamples = array.array('f',[0])
 
 def threadInit():	#Initialize threads
 	global t_collector
-	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
-	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
+	t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	#t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
 	t_collector.start()
 
 
