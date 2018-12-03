@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo B
 parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=True)
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
-parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 160*1024)#320*1024)
+parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 320*1024)#320*1024)
 parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
@@ -120,18 +120,18 @@ if __name__ == "__main__":
 			if Signal.samples_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
 				this_frame1 = Signal.samples_FIFO.get_nowait()
-				this_frame = this_frame1[2000:-1]
+				#this_frame = this_frame1[2000:-1]
 
 				#this_frame = [(x-this_frame1[0]) for x in this_frame1]
 
 				#plt.subplot(211)
-				#plt.plot(this_frame)
+				#plt.plot(this_frame1)
 
-				this_frame =  filterGen.bp_butter(this_frame, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
+				this_frame =  filterGen.bp_butter(this_frame1, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
 				#plt.subplot(212)
 				#plt.plot(this_frame)
-				#plt.show
+				#plt.show()
 
 				if Signal.decimation_factor > 1:
 					 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library

@@ -1,11 +1,10 @@
 # This comparator was designed to work for a packet preamble of exactly [1,1,1,0], it was not tested under any other cases.
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-
+debug = False				#Generate debugging plots
 
 def compare_signal(signal, samples_per_bit, Packet):
 
@@ -44,7 +43,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 	for x in transitions:
 		if x - cooldown > cooldown_margin:
-			real_transitions.append(x)
+			#real_transitions.append(x)
 			preamble_match = []
 			for i in range(len(RPrP)):
 				preamble_match.append(binary_threshold(signal[x + RPrP[i]],threshold))
@@ -55,22 +54,25 @@ def compare_signal(signal, samples_per_bit, Packet):
 					end_result[position2] = binary_threshold(signal[position], threshold)
 				cooldown = x
 
-	plt.plot(signal)
 
-	POC = []  # Points of collection
-	for y in real_transitions:
-		for u in RPaP:
-			POC.append(y+u)
+	if debug == True:
+
+		plt.plot(signal)
+
+		POC = []  # Points of collection
+		for y in real_transitions:
+			for u in RPaP:
+				POC.append(y+u)
 
 
-	t_threshold = [threshold] * len(real_transitions)
-	t2_signal = [(signal[x]) for x in POC]
+		t_threshold = [threshold] * len(real_transitions)
+		t2_signal = [(signal[x]) for x in POC]
 
-	plt.scatter(real_transitions, t_threshold, color='black')
-	plt.scatter(POC, t2_signal, color='orange')
+		plt.scatter(real_transitions, t_threshold, color='black')
+		plt.scatter(POC, t2_signal, color='orange')
 
-	plt.axhline(y= threshold, color='k')
-	plt.show()
+		plt.axhline(y= threshold, color='k')
+		plt.show()
 
 
 
