@@ -31,7 +31,7 @@ parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=Tr
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
 parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 320*1024)#320*1024)
-parser.add_argument('-nf','--nfram', help='Number of frames to be collected before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
+parser.add_argument('-ff','--fifo', help='FIFO size, default is 5, must be 5 or greater', type=int, required=False, default = 5)
 parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
 parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
@@ -59,7 +59,7 @@ print(args)
 #SDR.gain = args['gain']
 
 #Signal characteristics
-Signal = classGen.Signal(args['freq'], args['samp'], args['gain'], args['sfram'], args['nfram'], args['symb'], 0.0152, 1, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 1, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
 Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
@@ -95,8 +95,8 @@ allsamples = array.array('f',[0])
 
 def threadInit():	#Initialize threads
 	global t_collector
-	t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
-	#t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
+	#t_collector = threading.Thread(target=Signal.collect_data, name="Collector", args=[])
+	t_collector = threading.Thread(target=Signal.generate_data, name="Collector", args=[Packet])
 	t_collector.start()
 
 
@@ -106,7 +106,6 @@ if __name__ == "__main__":
 		t = time.time()
 
 		threadInit()  # Initialize the data source required threads.
-
 		Signal.demod_signal = []		# Flush the previous iteration's demodulation
 		iteration_end = False       	# At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
@@ -120,6 +119,7 @@ if __name__ == "__main__":
 			if Signal.samples_FIFO.empty() == False: # Are there any samples in the harvesting FIFO?
 
 				this_frame1 = Signal.samples_FIFO.get_nowait()
+				Signal.samples_FIFO.task_done()
 				#this_frame = this_frame1[2000:-1]
 
 				#this_frame = [(x-this_frame1[0]) for x in this_frame1]
