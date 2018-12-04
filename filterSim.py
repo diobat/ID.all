@@ -22,7 +22,7 @@ symbol_rate = 3650
 nyq_freq = sample_rate/2
 
 filter_order = 2
-low_cutoff = 15
+low_cutoff = 10
 high_cutoff = 3650
 
 post_filter = filterGen.bp_butter(pre_filter, [low_cutoff, high_cutoff], filter_order, sample_rate)

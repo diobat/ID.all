@@ -43,6 +43,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 	for x in transitions:
 		if x - cooldown > cooldown_margin:
+			real_transitions.append(x)
 			preamble_match = []
 			for i in range(len(RPrP)):
 				preamble_match.append(binary_threshold(signal[x + RPrP[i]],threshold))
