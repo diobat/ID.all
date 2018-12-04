@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-debug = True				#Generate debugging plots
+debug = False				#Generate debugging plots
 
 def compare_signal(signal, samples_per_bit, Packet):
 
@@ -17,7 +17,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 	index = -1
 	end_result = [0] * int(len(signal)/SPB)
 
-	packet_size_samples = Packet.packet_size * SPB
+	packet_size_samples = round(Packet.packet_size * samples_per_bit)
 	cooldown_margin = int(packet_size_samples * 1.5)
 	cooldown = -1 * packet_size_samples
 
@@ -30,12 +30,12 @@ def compare_signal(signal, samples_per_bit, Packet):
 	RPrP = []       #Relative preamble harvest positions
 	RPaP = []       #Relative packet harvest positions
 
-	y = int(SPB/2)
+	y = int(SPB*0.3)
 	for w in range(Packet.preamble_len):
-		RPrP.append((w*SPB)+y)
+		RPrP.append(round(w*samples_per_bit)+y)			#an in version cannot be used as the sucessive roundings will eventually cause a ssynchro error, hence not using variable SPB
 
 	for w in range(Packet.packet_size):
-		RPaP.append((w*SPB)+y)
+		RPaP.append(round(w*samples_per_bit)+y)
 
 	real_transitions = []
 	#print(SPB)
@@ -43,17 +43,16 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 	for x in transitions:
 		if x - cooldown > cooldown_margin:
-			#real_transitions.append(x)
 			preamble_match = []
 			for i in range(len(RPrP)):
 				preamble_match.append(binary_threshold(signal[x + RPrP[i]],threshold))
 			if preamble_match == Packet.preamble :
 				for i in range(len(RPaP)):
 					position = x + RPaP[i]
-					position2 = int(position/SPB)
+					position2 = int(position/samples_per_bit)
 					end_result[position2] = binary_threshold(signal[position], threshold)
 				cooldown = x
-
+				real_transitions.append(x)
 
 	if debug == True:
 
@@ -75,7 +74,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 		plt.show()
 
 
-	print(end_result)
+	#print(end_result)
 	return end_result
 
 
