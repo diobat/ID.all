@@ -51,14 +51,6 @@ print(args)
 ########################################################################
 
 
-# Initialize SDR kit
-#SDR = RtlSdr()
-
-# configure SDR device
-#SDR.sample_rate = int(args['samp'])						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
-#SDR.center_freq = args['freq']
-#SDR.gain = args['gain']
-
 #Signal characteristics
 Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 1, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
@@ -104,14 +96,17 @@ def threadInit():	#Initialize threads
 
 if __name__ == "__main__":
 	
-	harvest_delta = 0
+
 	delta_st = int(1)
+	threadInit()
+	threadInit()  
+  
 
 	while infinite_loop == True:
 		t = time.time()
 		
 		
-		if Signal.samples_FIFO.qsize() < Signal.FIFO_size:
+		if not Signal.samples_FIFO.full():
 			#print(str(Signal.samples_FIFO.qsize()) +' < '+ str(Signal.FIFO_size))
 			#print('Thread init')
 			threadInit()  				# Initialize the data source required threads.
@@ -204,7 +199,7 @@ if __name__ == "__main__":
 		ideal_harvest_time = Signal.frame_size/Signal.sample_rate
 
 		runtime = round(time.time() -t, 3)
-		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nSuccess Rate: 		" +str(round(success_ratio,1)) + "\nRuntime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
+		print("\n ==================  \n\nTemporal Window 	" + str(round(temporal_window, 3)) + "\nIterations: 		" +  str(iteration_counter) + "\nSamples processed: 	" + str(Signal.frame_size) + "\nPreambles detected: 	" + str(preamble_detections) + "\nSucesses: 		" + str(sucesses) +  "\nTotal Runtime: 		"  +  str(runtime)  + "\nPackets per second: 	"  +  str(round(sucesses / max(temporal_window,runtime), 2) ))
 		print('Ideal harvest time:	' + str(round(ideal_harvest_time,3)))
 		print('Real harvest time:	' + str(round(Signal.harvest_delta,3)))
 		print('Comparator runtime:	' + str(round(delta_st, 3)))

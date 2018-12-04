@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-debug = False				#Generate debugging plots
+debug = True				#Generate debugging plots
 
 def compare_signal(signal, samples_per_bit, Packet):
 
@@ -18,7 +18,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 	end_result = [0] * int(len(signal)/SPB)
 
 	packet_size_samples = Packet.packet_size * SPB
-	cooldown_margin = int(packet_size_samples * 1.2)
+	cooldown_margin = int(packet_size_samples * 1.5)
 	cooldown = -1 * packet_size_samples
 
 
@@ -75,7 +75,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 		plt.show()
 
 
-
+	print(end_result)
 	return end_result
 
 

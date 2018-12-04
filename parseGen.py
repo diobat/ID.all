@@ -35,7 +35,7 @@ def binary_parse(symbol_list, preamble, packet_size, payload_size):
 
 def crc_check(payload_crc, binary_divisor):	#CRC validation
 
-	#print("payload + crc = " + str(payload_crc))
+	print("payload + crc = " + str(payload_crc))
 
 	validity = [0 for x in range(len(binary_divisor)-1)]
 
@@ -44,8 +44,8 @@ def crc_check(payload_crc, binary_divisor):	#CRC validation
 			for y in range(len(binary_divisor)-1):
 				payload_crc[x+y] = payload_crc[x+y] ^ binary_divisor[y]		# ^ = XOR
 
-	#print("FINAL CRC = " + str(payload_crc[-3:]))
-	#print("validity = " + str(validity))
+	print("FINAL CRC = " + str(payload_crc[-3:]))
+	print("validity = " + str(validity))
 
 	return payload_crc[-3:] == validity
 	#return True

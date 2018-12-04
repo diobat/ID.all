@@ -22,7 +22,7 @@ class Signal:
 		self.FIFO_size = FIFO_size
 		self.samples_per_symbol = (self.sample_rate / self.symbol_rate) / self.decimation_factor        # How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
 		self.samples_FIFO = queue.Queue(FIFO_size)                                          # size 50 FIFO to store the samples between harvesting and comparating
-		self.harvest_delta = 0 						# variable init, time it takes to harvest the signal
+		self.harvest_delta = [] 						# variable init, time it takes to harvest the signal
 
 		self.SDR = rtlsdr.RtlSdr()
 		self.SDR.sample_rate = self.sample_rate						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
@@ -35,23 +35,21 @@ class Signal:
 
 		if self.use_simulator:
 
-			while self.FIFO_size > self.samples_FIFO.qsize():
-				q = time.time()
-				samples = simGen.genr_samples(self, Packet)
-				self.samples_FIFO.put(samples, True, 0.1)  								## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
-				#print(self.samples_FIFO.qsize())
-				self.harvest_delta = time.time() - q
-				q = 0
+
+			q = time.time()
+			samples = simGen.genr_samples(self, Packet)
+			self.samples_FIFO.put_nowait(samples)  								## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+			#print(self.samples_FIFO.qsize())
+			self.harvest_delta = time.time() - q
 
 		else:
 
-			while self.FIFO_size > self.samples_FIFO.qsize():
-				q = time.time()
-				samples = abs(self.SDR.read_samples(self.frame_size))
-				self.samples_FIFO.put(samples, True, 0.1) 									 ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
-				#print(self.samples_FIFO.qsize())
-				self.harvest_delta = time.time() - q
-				q = 0
+
+			q = time.time()
+			samples = abs(self.SDR.read_samples(self.frame_size))
+			self.samples_FIFO.put_nowait(samples) 									 ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
+			#print(self.samples_FIFO.qsize())
+			self.harvest_delta = round(time.time() - q, 3)
 
 
 
