@@ -128,22 +128,35 @@ if __name__ == "__main__":
 		Signal.samples_FIFO.task_done()
 		#this_frame = this_frame1[2000:-1]
 
-		#this_frame = [(x-this_frame1[0]) for x in this_frame1]
+
+		#offset = min(this_frame1[5000:])
+		#this_frame1 = [(x-offset) for x in this_frame1]
 
 		#plt.subplot(211)
 		#plt.plot(this_frame1)
+		#plt.title('Signal, pre filtering')
+		#plt.xlabel('Sample index')
+		#plt.ylabel('Quantization')
 
 		this_frame =  filterGen.bp_butter(this_frame1, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
 
+		this_frame = this_frame[45000:]	
+
 		#plt.subplot(212)
 		#plt.plot(this_frame)
+		#plt.title('Signal, post filtering')
+		#plt.xlabel('Sample index')
+		#plt.ylabel('Quantization')
 		#plt.show()
+
+
+		
 
 		if Signal.decimation_factor > 1:
 			 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
 
 		#Fix this by removing the first sample earlier?
-		this_frame = this_frame[int(45000/Signal.decimation_factor):-1]							# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
+								# Filtering the frame introduces artifacts in the first few samples, those samples are removed here in order to facilitate the comparator work.
 
 		#demod_signal = DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol) 								#Deep Demodulation
 

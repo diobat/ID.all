@@ -15,21 +15,21 @@ def binary_parse(symbol_list, preamble, packet_size, payload_size):
 	# CRC
 	CRC_divisor = [1,0,1,0]
 
-
-	xv = [0]
+	xv = -1 * packet_size
 
 	for x in range(len(symbol_list) - packet_size) :
-													# Detects preambles
-		if symbol_list[x:x+len(preamble)] == preamble:
+		
+		if symbol_list[x:x+len(preamble)] == preamble:						# Detects preambles
 			preamble_detections += 1                                										# Counts them
 			if crc_check(symbol_list[x+len(preamble):x+packet_size-1],CRC_divisor):
 				validated_payload =  symbol_list[x+len(preamble):x+len(preamble)+payload_size]
 				#print(str(x) + ' : ' + str(validated_payload))
 
-				if x > (max(xv) + packet_size+5):
-					xv.append(x)
+				if x > (xv + packet_size + 5):
+					xv = x
 					message_result.append(validated_payload)											        	# If validaded adds to the output batch
 					sucesses += 1
+					cooldown = x
 
 	return message_result, sucesses, preamble_detections
 
