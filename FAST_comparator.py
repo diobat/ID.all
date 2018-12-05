@@ -9,16 +9,18 @@ debug = False				#Generate debugging plots
 def compare_signal(signal, samples_per_bit, Packet):
 
 	t = time.time()
+	#signal = signal[int(len(signal) * 0.75):]
 
 	SPB = int(samples_per_bit)
 	ratio = 0.3
-	threshold =  max(signal)*ratio
+	threshold =  max(max(signal)*ratio, 0.005)
 
 	index = -1
-	end_result = [0] * int(len(signal)/SPB)
+	end_result = [0] * int(len(signal)/samples_per_bit)
 
-	packet_size_samples = round(Packet.packet_size * samples_per_bit)
-	cooldown_margin = int(packet_size_samples * 1.5)
+	packet_size_samples = int(Packet.packet_size * samples_per_bit)
+	cooldown_margin = int(packet_size_samples * 1.2)
+	#print(cooldown_margin)
 	cooldown = -1 * packet_size_samples
 
 
@@ -30,7 +32,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 	RPrP = []       #Relative preamble harvest positions
 	RPaP = []       #Relative packet harvest positions
 
-	y = int(SPB*0.3)
+	y = int(samples_per_bit*0.3)
 	for w in range(Packet.preamble_len):
 		RPrP.append(round(w*samples_per_bit)+y)			#an in version cannot be used as the sucessive roundings will eventually cause a ssynchro error, hence not using variable SPB
 
@@ -42,6 +44,7 @@ def compare_signal(signal, samples_per_bit, Packet):
 	#print(RPaP)
 
 	for x in transitions:
+		#print(x-cooldown)
 		if x - cooldown > cooldown_margin:
 			real_transitions.append(x)
 			preamble_match = []
