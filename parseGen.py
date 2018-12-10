@@ -4,7 +4,7 @@
 
 
 
-def binary_parse(symbol_list, preamble, packet_size, payload_size):
+def binary_parse(symbol_list, preamble, packet_size, payload_size, STOP_bits):
 
 	flipped_symbol_list = [1 - x for x in symbol_list]
 
@@ -21,9 +21,8 @@ def binary_parse(symbol_list, preamble, packet_size, payload_size):
 		
 		if symbol_list[x:x+len(preamble)] == preamble:						# Detects preambles
 			preamble_detections += 1                                										# Counts them
-			if crc_check(symbol_list[x+len(preamble):x+packet_size-1],CRC_divisor):
+			if crc_check(symbol_list[x+len(preamble):x+packet_size],CRC_divisor, payload_size, STOP_bits):
 				validated_payload =  symbol_list[x+len(preamble):x+len(preamble)+payload_size]
-				#print(str(x) + ' : ' + str(validated_payload))
 
 				if x > (xv + packet_size + 5):
 					xv = x
@@ -33,21 +32,33 @@ def binary_parse(symbol_list, preamble, packet_size, payload_size):
 
 	return message_result, sucesses, preamble_detections
 
-def crc_check(payload_crc, binary_divisor):	#CRC validation
+def crc_check(payload_crc_stop, binary_divisor, payload_size, expected_STOP_bits):	#CRC validation
 
 	#print("payload + crc = " + str(payload_crc))
+	
+	payload_crc = payload_crc_stop[:payload_size + len(binary_divisor)-1]
+	stop_bits = payload_crc_stop[payload_size + len(binary_divisor)-1:]
+	
+	#print('\n\n\n\nPayload + CRC: ' + str(payload_crc))
+	#print('Stop Bits: ' + str(stop_bits))
+	#print('Expected Stop Bits: ' + str(expected_STOP_bits))
+		
 
 	validity = [0 for x in range(len(binary_divisor)-1)]
+	validity.extend(expected_STOP_bits)
 
 	for x in range(len(payload_crc) - (len(binary_divisor)-1)):			# For an indepth explanation of this function visit the wikipedia page: Cyclic Redundancy Check
 		if payload_crc[x] == 1:
 			for y in range(len(binary_divisor)-1):
 				payload_crc[x+y] = payload_crc[x+y] ^ binary_divisor[y]		# ^ = XOR
 
-	#print("FINAL CRC = " + str(payload_crc[-3:]))
+
+	result = payload_crc[-3:] + stop_bits
+
+	#print("\nFINAL CRC = " + str(result))
 	#print("validity = " + str(validity))
 
-	return payload_crc[-3:] == validity
+	return result == validity
 	#return True
 
 

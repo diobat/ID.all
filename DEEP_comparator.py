@@ -299,7 +299,8 @@ def interval_average(signal, indexes):
 
 	for x in range(len(averages)):
 		tempbuffer = signal[indexes[x]:indexes[x+1]]
-		averages[x] = np.mean(tempbuffer[round(len(tempbuffer)*0.3):round(len(tempbuffer)*0.9)])
+		#averages[x] = np.mean(tempbuffer[round(len(tempbuffer)*0.3):round(len(tempbuffer)*0.9)])
+		averages[x] = np.mean(tempbuffer)
 
 		#averages[x] = np.mean(signal[indexes[x]:indexes[x+1]])
 

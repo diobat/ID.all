@@ -52,7 +52,7 @@ print(args)
 
 
 #Signal characteristics
-Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 1, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 4, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
 Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
@@ -178,7 +178,7 @@ if __name__ == "__main__":
 ### INFORMATION PARSING
 ########################################################################
 
-		message_result, sucesses, preamble_detections = parseGen.binary_parse(Signal.demod_signal, Packet.preamble , Packet.packet_size , Packet.payload_size)
+		message_result, sucesses, preamble_detections = parseGen.binary_parse(Signal.demod_signal, Packet.preamble , Packet.packet_size , Packet.payload_size, Packet.STOP_bits)
 
 
 ########################################################################
