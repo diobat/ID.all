@@ -13,7 +13,11 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 	SPB = int(samples_per_bit)
 	ratio = 0.3
-	threshold =  max(max(signal)*ratio, 0.005)
+	#max_signal = max(signal)
+	#min_signal = min(signal)
+	
+	threshold =  max(max(signal), 0.006)*ratio
+	#threshold = (max_signal * ratio + min_signal * (1-ratio))
 
 	index = -1
 	end_result = [0] * int(len(signal)/samples_per_bit)
