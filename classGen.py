@@ -1,33 +1,35 @@
 import queue			#FIFO/queue
 import simGen           #The ability to simulate a signal
-#import rtlsdr			#SDR
+import rtlsdr			#SDR
 import time				# measuring the harvest duration
 
 class Signal:
 
 	demod_signal = []
 
-	def __init__(self, generate, carrier_freq, sample_rate, software_gain, frame_size, FIFO_size, symbol_rate, silence_time, decimation_factor, simulator_mode):
-		self.simulator_mode = simulator_mode
+	def __init__(self, generate, carrier_freq, sample_rate, software_gain, frame_size, FIFO_size, symbol_rate, silence_time, decimation_factor):
+		self.decimation_factor = decimation_factor
 
 		self.use_simulator =  generate
 		self.carrier_freq = carrier_freq
 		self.sample_rate = sample_rate
+		self.sample_rate_adj = self.sample_rate / self.decimation_factor	#adjusted sample rate to take decimation into account
 		self.frame_size = frame_size
 		self.symbol_rate = symbol_rate
 		self.symbol_period = 1/self.symbol_rate
 		self.silence_time = silence_time
 		self.silence_samples = int(silence_time * sample_rate)
-		self.decimation_factor = decimation_factor
-		self.FIFO_size = FIFO_size
-		self.samples_per_symbol = (self.sample_rate / self.symbol_rate) / self.decimation_factor        # How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
-		self.samples_FIFO = queue.Queue(FIFO_size)                                          # size 50 FIFO to store the samples between harvesting and comparating
-		self.harvest_delta = [] 						# variable init, time it takes to harvest the signal
 
-		#self.SDR = rtlsdr.RtlSdr()
-		#self.SDR.sample_rate = self.sample_rate						#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
-		#self.SDR.center_freq = self.carrier_freq
-		#self.SDR.gain = software_gain
+		self.FIFO_size = FIFO_size
+		self.samples_per_symbol_raw = (self.sample_rate / self.symbol_rate)
+		self.samples_per_symbol = (self.sample_rate_adj / self.symbol_rate)         # How many times each bit of information will be sampled by the SDR kit as it arrives. Lower means faster code executing speeds, higher means lower error rate. Should never be lower than 2
+		self.samples_FIFO = queue.Queue(FIFO_size)                                  # size 50 FIFO to store the samples between harvesting and comparating
+		self.harvest_delta = [] 													# variable init, time it takes to harvest the signal
+
+		self.SDR = rtlsdr.RtlSdr()
+		self.SDR.sample_rate = self.sample_rate									#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+		self.SDR.center_freq = self.carrier_freq
+		self.SDR.gain = software_gain
 
 
 
@@ -46,7 +48,7 @@ class Signal:
 
 
 			q = time.time()
-			#samples = abs(self.SDR.read_samples(self.frame_size))
+			samples = abs(self.SDR.read_samples(self.frame_size))
 			self.samples_FIFO.put_nowait(samples) 									 ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 			#print(self.samples_FIFO.qsize())
 			self.harvest_delta = round(time.time() - q, 3)

@@ -3,7 +3,7 @@ import pylab
 import matplotlib.pyplot as plt
 from astropy.io import ascii
 
-debug0 = False		# See the raw signal
+debug0 = True		# See the raw signal
 debug = False		# Set to true to plot graphs
 debug1 = True		# Set to true to plot graphs
 debug2 = False		# Good and bad examples
@@ -28,7 +28,7 @@ def compare_signal(signal, samples_per_symbol, packet_size, samples_between_pack
 	signal_floor = min(signal)
 	#print("\n\namplitude" + str(signal_ceil - signal_floor) + "\n\n")
 
-	ratio = 0.20
+	ratio = 0.27
 
 	threshold = ((signal_ceil - signal_floor)*ratio)   + signal_floor
 
@@ -79,10 +79,11 @@ def compare_signal(signal, samples_per_symbol, packet_size, samples_between_pack
 	##################	##################	##################	##################	##################	##################
 
 
+	correct_point = input("Correct Transition:")			#HALF TRANSITION
+	wrong_point = input("Wrong Transition:")
 
-
-	correct_point = 99492			#HALF TRANSITION
-	wrong_point = 67004
+	#correct_point = 99492			#HALF TRANSITION
+	#wrong_point = 67004
 
 	#correct_point = 133584			#HALF TRANSITION
 	#wrong_point = 66930

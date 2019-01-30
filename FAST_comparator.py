@@ -8,16 +8,15 @@ debug = False				#Generate debugging plots
 
 def compare_signal(signal, samples_per_bit, Packet):
 
-	t = time.time()
-	#signal = signal[int(len(signal) * 0.75):]
+	#t = time.time()
 
 	SPB = int(samples_per_bit)
 	ratio = 0.3
-	#max_signal = max(signal)
-	#min_signal = min(signal)
-	
-	threshold =  max(max(signal), 0.006)*ratio
-	#threshold = (max_signal * ratio + min_signal * (1-ratio))
+	max_signal = max(signal)
+	min_signal = min(signal)
+
+	#threshold =  max(max(signal), 0.006)*ratio
+	threshold = (max_signal * ratio + min_signal * (1-ratio))
 
 	index = -1
 	end_result = [0] * int(len(signal)/samples_per_bit)
@@ -36,9 +35,9 @@ def compare_signal(signal, samples_per_bit, Packet):
 	RPrP = []       #Relative preamble harvest positions
 	RPaP = []       #Relative packet harvest positions
 
-	y = int(samples_per_bit*0.3)
+	y = int(samples_per_bit*0.5)
 	for w in range(Packet.preamble_len):
-		RPrP.append(round(w*samples_per_bit)+y)			#an in version cannot be used as the sucessive roundings will eventually cause a ssynchro error, hence not using variable SPB
+		RPrP.append(round(w*samples_per_bit)+y)			#an in version cannot be used as the sucessive roundings will eventually cause a synchro error, hence not using variable SPB
 
 	for w in range(Packet.packet_size):
 		RPaP.append(round(w*samples_per_bit)+y)
@@ -74,11 +73,23 @@ def compare_signal(signal, samples_per_bit, Packet):
 
 		t_threshold = [threshold] * len(real_transitions)
 		t2_signal = [(signal[x]) for x in POC]
-
-		plt.scatter(real_transitions, t_threshold, color='black')
-		plt.scatter(POC, t2_signal, color='orange')
-
 		plt.axhline(y= threshold, color='k')
+		plt.scatter(POC, t2_signal, color='orange')
+		plt.scatter(real_transitions, t_threshold, color='black')
+
+
+		plt.title('FAST Comparator', fontsize = 20)
+		plt.xlabel('Sample index')
+		plt.ylabel('Quantization level')
+
+
+
+		#pylab.subplot(2,1,2)
+		#fft_signal = np.fft(signal)
+		#pylab.plot(fft_signal)
+		plt.legend(['Signal', 'Threshold', 'Chosen samples', 'Temporal synchronization Points'], loc = 1)
+
+
 		plt.show()
 
 

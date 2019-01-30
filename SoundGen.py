@@ -15,6 +15,7 @@ import threading		#Multi-threading
 import array
 import sys
 import DEEP_comparator, PBZ_comparator, FAST_comparator, filterGen, parseGen, fileGen, classGen		#demodulating library
+import PBZS_comparator
 #import gpioGen
 import time				#time deltas
 import argparse			#argumment management
@@ -52,7 +53,7 @@ print(args)
 
 
 #Signal characteristics
-Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 4, True)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 4)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
 Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
@@ -95,27 +96,27 @@ def threadInit():	#Initialize threads
 
 
 if __name__ == "__main__":
-	
+
 
 	delta_st = int(1)
 	threadInit()
-	threadInit()  
-  
+	threadInit()
+
 
 	while infinite_loop == True:
 		t = time.time()
-		
-		
+
+
 		if not Signal.samples_FIFO.full():
 			#print(str(Signal.samples_FIFO.qsize()) +' < '+ str(Signal.FIFO_size))
 			#print('Thread init')
 			threadInit()  				# Initialize the data source required threads.
-			
-			
+
+
 		Signal.demod_signal = []		# Flush the previous iteration's demodulation
 		iteration_end = False       	# At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
 		iteration_count = 0
-		
+
 		while Signal.samples_FIFO.empty():
 			#print(Signal.samples_FIFO.empty)
 			pass
@@ -128,29 +129,14 @@ if __name__ == "__main__":
 		Signal.samples_FIFO.task_done()
 		#this_frame = this_frame1[2000:-1]
 
-
 		#offset = min(this_frame1[5000:])
 		#this_frame1 = [(x-offset) for x in this_frame1]
 
-		#plt.subplot(211)
-		#plt.plot(this_frame1)
-		#plt.title('Signal, pre filtering')
-		#plt.xlabel('Sample index')
-		#plt.ylabel('Quantization')
+		this_frame =  filterGen.bp_butter(this_frame1, [1, 3650], 2, Signal.sample_rate_adj)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "filterSim.py" script
 
-		this_frame =  filterGen.bp_butter(this_frame1, [10, 3650], 2, Signal.sample_rate)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "ZXC.py" script
-
-		this_frame = this_frame[45000:]	
-
-		#plt.subplot(212)
-		#plt.plot(this_frame)
-		#plt.title('Signal, post filtering')
-		#plt.xlabel('Sample index')
-		#plt.ylabel('Quantization')
-		#plt.show()
+		this_frame = this_frame[45000:]
 
 
-		
 
 		if Signal.decimation_factor > 1:
 			 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
@@ -165,6 +151,8 @@ if __name__ == "__main__":
 			Signal.demod_signal.extend(FAST_comparator.compare_signal(this_frame, Signal.samples_per_symbol, Packet))
 		elif args['comp'] == 'PBZ':
 			Signal.demod_signal.extend(PBZ_comparator.compare_signal(this_frame, Signal.samples_per_symbol))	# The comparator's output is concatenated to the array end_result
+		elif args['comp'] == 'PBZS':
+			Signal.demod_signal.extend(PBZS_comparator.compare_signal(this_frame, Signal.samples_per_symbol, Packet.packet_size, Signal.silence_samples))
 		else:
 			Signal.demod_signal.extend(DEEP_comparator.compare_signal(this_frame, Signal.samples_per_symbol))
 		delta_st = time.time() - st
