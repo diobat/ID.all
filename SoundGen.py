@@ -31,8 +31,9 @@ parser = argparse.ArgumentParser(prog = 'SoundGen', description='Made by Diogo B
 parser.add_argument('-f','--freq', help='Center Frequency',type=int, required=True)
 parser.add_argument('-s','--samp', help='Sampling rate, default is 226kHz', type=int, required=False, default = 226000)
 parser.add_argument('-g','--gain', help='Gain, [0 50], default is 15', type=int,required=False, default = 15)
-parser.add_argument('-sf','--sfram', help='Frame size, default is 32k', type=int, required=False, default = 320*1024)#320*1024)
+parser.add_argument('-sf','--sfram', help='Frame size, default is 32k. An error will occurr it isnt set to a multiple of 512', type=int, required=False, default = 320*1024)#320*1024)
 parser.add_argument('-ff','--fifo', help='FIFO size, default is 5, must be 5 or greater', type=int, required=False, default = 10)
+parser.add_argument('-dc','--dcim', help='Decimation order.', type=int, required=False, default = 1)
 parser.add_argument('-it','--itnum', help='Number of iterations before program ends, default is 1, must be 1 or greater', type=int, required=False, default = 1)
 parser.add_argument('-db','--dbug', help='DebugMode, default is False', required=False, type=bool, default = False)
 parser.add_argument('-i','--infi', help='InfiniteMode, default is True', required=False, default = True)
@@ -53,7 +54,7 @@ print(args)
 
 
 #Signal characteristics
-Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, 4)		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
+Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, args['dcims'])		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
 Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
