@@ -11,7 +11,6 @@ Welcome to SoundGen's documentation!
    :caption: Contents:
 
 
-
 Indices and tables
 ==================
 
@@ -23,10 +22,10 @@ Indices and tables
 What is SoundGen:
 =================
 
-| SoundGen is a flexible burst mode ASK signal demodulator and frame processer, created with DVB-T in mind.
+| SoundGen is a flexible burst mode ASK signal demodulator and frame processer, created with DVB-T in mind. For a larger contextualization consult the thesis this document is annexed to.
 |
 | This software couples an easy setup with the advantage of the flexible tuning mechanism included in the SDR kit. It includes the possibility of network integration.
-| The script has been tested only for scenarios where an emitter is transmitting ASK encoded frames in bursts, spaced by periods of silence, with constant distinct RF power levels for different symbols. It is very unlikely successful demodulations will occur in any other scenario.
+| The script has been tested only for scenarios where an emitter is transmitting ASK encoded frames in bursts, spaced by periods of silence, with constant distinct RF power levels for different symbols.
 | This user guide is oriented towards the final user, if you are a developer who wishes to contribute please read the master thesis associated with this project. Furthermore, all the details in this document assume you have a working with a clone of the master SD card.
 
 Example:
@@ -35,7 +34,7 @@ Demodulating a signal with a 5kHz symbol rate riding on a 95MHz carrier wave is 
 
  python3 SoundGen.py -f 95000000 -sym 5000
 
-.. _here: https://github.com/Espigao25/SoundGen_Python
+.. _here: https://gitlab.com/diogobatista/soundgen_python
 
 The code repository can be found here_ .
 
@@ -66,8 +65,7 @@ How to setup
 How to use
 ------------
 
-"python3 SoundGen.py -h" on the terminal will give you a list of all the arguments you can pass into the script. They are:
-
+"python3 SoundGen.py -h" on the terminal will give you an updated list of all the arguments you can pass into the script. They are:
 
 
 +---------------+----------------------------------------------------------------------------+---------+
@@ -75,19 +73,25 @@ How to use
 +---------------+----------------------------------------------------------------------------+---------+
 | -f *          |  Center frequency tuning, should equal the freq of your carrier wave       | int     |
 +---------------+----------------------------------------------------------------------------+---------+
-| -sym *        |  Symbol rate                                                               | int     |
+| -sym          |  Symbol rate of expected ASK signal. Defaults to 3650.                     | int     |
 +---------------+----------------------------------------------------------------------------+---------+
-| -samp         |  Sampling rate.                                                            | int     |
+| -s            |  Sampling rate. Defaults to 226 000.                                       | int     |
 +---------------+----------------------------------------------------------------------------+---------+
-| -sf           |  Frame size in samples.                                                    | int     |
+| -ff           |  Size of the internal FIFO. Default value is 5, must be 5 or greater.      | int     |
 +---------------+----------------------------------------------------------------------------+---------+
-| -nf           |  Number of frames to process before exiting (unless inf mode is enabled).  | int     |
+| -sf           |  Frame size in samples. Defaults to 327 680. Must be a multiple of 512.    | int     |
 +---------------+----------------------------------------------------------------------------+---------+
-| -gain         |  Software gain, must belong to interval [0 50].                            | int     |
+| -g            |  Software gain, must belong to interval [0 50].                            | int     |
++---------------+----------------------------------------------------------------------------+---------+
+| -it           |  Number of main loop cycles before program exits. Meaningless if -i True.  | int     |
 +---------------+----------------------------------------------------------------------------+---------+
 | -i            |  Infinite mode, runs the program indefinitely if True.                     | bool    |
 +---------------+----------------------------------------------------------------------------+---------+
 |-db            |  Debug mode, dumps debugging info into three distinct outfiles.            | bool    |
++---------------+----------------------------------------------------------------------------+---------+
+|-cp            |  Which comparator to use, -DEEP -PBZ or -FAST. Defaults to -FAST           | bool    |
++---------------+----------------------------------------------------------------------------+---------+
+|-gen           |  Generate signal internally (True) or use an external input (Default/False)| bool    |
 +---------------+----------------------------------------------------------------------------+---------+
 |-h             |  Ignore all other arguments, print this table and exit.                    | None    |
 +---------------+----------------------------------------------------------------------------+---------+
@@ -108,30 +112,20 @@ For example, in order to capture a signal with a 10k symbol rate on a 868MHz car
 
 |
 
-Demodulation
--------------
 
-Simply providing the program with a tuning frequency and a symbol rate will always return a string of bits, even in cases when there is nothing but background noise at the specified frequency.
-The output comes in two forms:
-
-1.A real time print into the terminal instance the program is being run on.
-
-2.A file dump of the entire signal demodulated during the total runtime of the program (see Debugging Mode for details).
-
-|
 
 Frame processing
 ------------------
 
 Not only will this package demodulate ASK frames, it will also process them according to the following packet protocol.
 
-| PREAMBLE + DATA + PARITY + STOP BIT
+| PREAMBLE + PAYLOAD + CRC + STOP BITS
 
-| Every time a PREAMBLE is detected and the subsequent packet passes the parity check, its DATA field will be added to a list of all the data fields successfully harvested from the current frame.
+| Every time a PREAMBLE is detected and the subsequent packet passes the CRC validation, its PAYLOAD field will be added to a list of all the data fields successfully harvested from the current frame.
 
-|  At the end of the program execution (or between cycles if infinite mode is turned on), all the DATA fields in that list will be dumped into a .npy file in the "./outputs/" folder. The user can run the following script in order to read the contents of the outputs folder. ::
+| At the end of the program execution (or between cycles if infinite mode is turned on), all the PAYLOAD fields in that list will be dumped into a .npy file in the "./outputs/" folder. The user can run the following script in order to read the contents of the outputs folder. ::
 
-  python3 read.npy
+  python3 readGen.npy
 
 |  No more than 5 .npy files will ever be in that folder at any given time, if the number exceeds the limit then the oldest one will be overwritten in order to prevent memory bloating.
 
@@ -142,7 +136,7 @@ Not only will this package demodulate ASK frames, it will also process them acco
 Network integration
 --------------------
 
-| Currently, the easiest way to provide network integration is to remotely access the RPI (see Remote Connection) and harvest the .npy files in "./outfile" in real time.
+| Currently, the easiest way to provide network integration is to remotely access the RPI (see Remote Connection) and harvest the .npy files in "./outputs/" in real time.
 | Measures have been taken to prevent concurrency issues. If the file is visible in the folder it means my script will no longer interact with it, ever.
 
 |
@@ -178,6 +172,7 @@ WARNING: ENABLING INFINITE MODE AND DEBUGGING MODE IN THE SAME EXECUTION IS NOT 
 Toggle this on if you wish for the program to run in an infinite loop
 
 |
+
 
 GPIO
 -------
@@ -254,3 +249,23 @@ And uncomment the second line of conde, adding input arguments as necessary. (Se
   sudo restart
 
 In order to deactivate the Autonomous mode, last line of startup.sh must be commented again.
+
+
+Real time plot generation mode
+--------------------------------
+
+The comparators have inbuilt debugging tools. Consult section 4.9 on the attached thesis for more detailed info.
+
+
+Filter simulation tool
+--------------------------------
+
+This package also includes a filter simulation tool as described. It can be found under filterSim.py, this script will import the signal presently stored under outfile_samples.npy. And apply a filter according to the designations under the scripts code. No user interface exists at the moment and the code must be edited directly in order to tweak simulated filter settings.
+
+In order to generate an outfile_samples.npy for this simulator to work with, run SoundGen on debug mode ("-db True" as an argument on the command line) with the filter disabled (line 136 commented in SoundGen.py)
+
+
+Internal signal generation mode
+--------------------------------
+
+If the -gen variable is set to true, the signal will not attempt to locate any SDR kit via USB connection. It will instead internally generate a signal that attempts to match provided settings. Symbol rate and sampling rate ratio will be taken into consideration, and the simulated packets will be according to the structure established on line 60 of SoundGen.py
