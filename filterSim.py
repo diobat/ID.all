@@ -22,7 +22,7 @@ symbol_rate = 3650
 nyq_freq = sample_rate/2
 
 filter_order = 2
-low_cutoff = 15
+low_cutoff = 10
 high_cutoff = 3650
 
 post_filter = filterGen.bp_butter(pre_filter, [low_cutoff, high_cutoff], filter_order, sample_rate)
@@ -65,6 +65,7 @@ plt.xlabel('Frequency Hz')
 plt.xlim([0, high_cutoff*ratio])
 plt.axvline(low_cutoff, color='green')      # cutoff frequency
 plt.axvline(high_cutoff, color='green')     # cutoff frequency
+plt.legend(['Gain','Cutoff Frequencies'])
 plt.grid()
 #ax2 = ax1.twinx()
 #angles = np.unwrap(np.angle(h))
@@ -73,13 +74,13 @@ plt.grid()
 
 ax3 = fig.add_subplot(223)
 plt.plot(pre_filter)
-plt.title('One packet pre filtering')
+plt.title('Signal excerpt pre filtering')
 plt.xlabel('Sample Index')
 plt.ylabel('Quantization')
 
 ax4 = fig.add_subplot(224)
 plt.plot(post_filter)
-plt.title('One packet post filtering')
+plt.title('Signal excerpt post filtering')
 plt.xlabel('Sample Index')
 plt.ylabel('Quantization')
 

@@ -8,23 +8,23 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = False 	# Should execution be halted at every step to generate graphs?
+debug = True 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
 
 def compare_signal(signal, samples_per_bit):
-	
-	
+
+
 	signal_ceil = max(signal)
 	signal_floor = min(signal)
 	#print("\n\namplitude" + str(signal_ceil - signal_floor) + "\n\n")
-	
+
 
 	t = time.time()
 
 	global debug, debug1, debug2
 
-	
+
 	SPF = len(signal)
 
 	word_frontiers, window_variance, variance_split = define_wordfrontiers(signal, samples_per_bit)
@@ -34,15 +34,15 @@ def compare_signal(signal, samples_per_bit):
 	envelope = []
 	envelope = enveloper(sliced_signal, SPF)
 	#threshold = abs(envelope[1] - envelope[0]) * 0.50 + envelope[1]
-	
+
 	#print('envelope = ' + str(envelope))
-	
+
 	threshold = []
 	for x in range(len(envelope[0])):
-		threshold.append((envelope[0][x] + envelope[1][x]) * 0.3)
-	
+		threshold.append((envelope[0][x] + envelope[1][x]) * 0.4)
+
 	#print('threshold = ' + str(threshold))
-	
+
 	result = []
 
 	allbit_frontier = []
@@ -55,7 +55,7 @@ def compare_signal(signal, samples_per_bit):
 	#print(len(sliced_signal))
 	#print('number of thresholds')
 	#print(len(threshold))
-	
+
 	for x in range(len(sliced_signal)):
 
 
@@ -82,7 +82,7 @@ def compare_signal(signal, samples_per_bit):
 			one_threshold = [threshold[x]] * len(sliced_signal[x])
 			full_thresholds.extend(one_threshold)
 			sliced_signal2.extend(sliced_signal[x])
-		
+
 		print(len(full_thresholds))
 		pylab.plot(full_thresholds,'k')
 		pylab.plot(sliced_signal2, 'b')
@@ -90,10 +90,10 @@ def compare_signal(signal, samples_per_bit):
 
 		for xc in allbit_frontier:
 			plt.axvline(x=xc)
-			
+
 		for xv in packet_start_index:
 			plt.axvline(x=xv, color='red')
-		
+
 
 		pylab.show()
 		input("Press space to continue")
@@ -146,15 +146,15 @@ def enveloper(signal_sliced, SPF):
 	#last_n_frames[-SPF:end] = signal
 	#I = np.nonzero(last_n_frames)
 	#first_non_zero = I[0][0]
-	
+
 	yupper = []
-	ylower = []	
-	
+	ylower = []
+
 	for x in range(len(signal_sliced)):
 		#print(len(signal_sliced[x]))
 		#print(type(signal_sliced[x]))
 		#print(type(np.percentile(signal_sliced[x], 97)))
-		
+
 		yupper.append(np.percentile(signal_sliced[x], 97))
 		ylower.append(np.percentile(signal_sliced[x],  3))
 
@@ -215,12 +215,12 @@ def define_wordfrontiers(signal, samples_per_bit):
 
 	t = time.time()
 
-	window = round(samples_per_bit * 10)
+	window = round(samples_per_bit * 15)
 
 	window_variance = variance(signal, window)
 
 
-	split = max(window_variance) * 0.25
+	split = max(window_variance) * 0.15
 
 	word_map = (window_variance > split)
 	word_frontiers_map = np.bitwise_xor(word_map[0:-2], word_map[1:-1])
@@ -236,8 +236,8 @@ def define_wordfrontiers(signal, samples_per_bit):
 		#print(word_frontiers_map)
 		#print("Word Frontiers: " + str(word_frontiers[0]))
 		#print(nnz)
-		
-		scale = 50
+
+		scale = 2
 		wv_toplot = [x * scale for x in window_variance]
 		pylab.plot(signal, 'b')
 		pylab.plot(wv_toplot, 'r')
@@ -299,7 +299,8 @@ def interval_average(signal, indexes):
 
 	for x in range(len(averages)):
 		tempbuffer = signal[indexes[x]:indexes[x+1]]
-		averages[x] = np.mean(tempbuffer[round(len(tempbuffer)*0.3):round(len(tempbuffer)*0.9)])
+		#averages[x] = np.mean(tempbuffer[round(len(tempbuffer)*0.3):round(len(tempbuffer)*0.9)])
+		averages[x] = np.mean(tempbuffer)
 
 		#averages[x] = np.mean(signal[indexes[x]:indexes[x+1]])
 

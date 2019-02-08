@@ -2,7 +2,7 @@ import numpy as np
 import pylab
 import matplotlib.pyplot as plt
 
-debug = False		# Set to true to plot graphs
+debug = True		# Set to true to plot graphs
 
 def compare_signal(signal, samples_per_symbol):
 
@@ -10,15 +10,12 @@ def compare_signal(signal, samples_per_symbol):
 	signal_ceil = max(signal)
 	signal_floor = min(signal)
 	#print("\n\namplitude" + str(signal_ceil - signal_floor) + "\n\n")
-	
-	ratio = 0.25
+
+	ratio = 0.35
 
 	threshold = ((signal_ceil - signal_floor)*ratio)   + signal_floor
 
-
-
 	#pylab.plot(signal)
-
 
 	signal_zero_centered = [(x - threshold) for x in signal]
 
@@ -45,14 +42,23 @@ def compare_signal(signal, samples_per_symbol):
 		signal_samples = []
 		for x in range(len(allindexes)):
 			signal_samples.append(signal[allindexes[x]])
+		ts = [threshold] * len(zero_crossings)
 		#pylab.subplot(2,1,1)
 		pylab.plot(signal)
 		plt.axhline(y=threshold, color='k', linestyle='-')
 		plt.scatter(allindexes, signal_samples, color='orange')
+		plt.scatter(zero_crossings, ts, color='black')
+		plt.title('Pass-by-zero Comparator', fontsize = 20)
+		plt.xlabel('Sample index')
+		plt.ylabel('Quantization level')
+
+
+
 		#pylab.subplot(2,1,2)
 		#fft_signal = np.fft(signal)
 		#pylab.plot(fft_signal)
-		pylab.show()
+		plt.legend(['Signal', 'Threshold', 'Chosen samples', 'Temporal synchronization Points'], loc = 1)
+		plt.show()
 
 
 
