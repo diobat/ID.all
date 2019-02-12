@@ -77,16 +77,12 @@ heartbeat = True
 #GPIO.setup(11, GPIO.OUT)
 #GPIO.setup(13, GPIO.OUT)
 
-
 ## Debugging variables
 allsamples = array.array('f',[0])
-
 
 ########################################################################
 ### FUNCTIONS
 ########################################################################
-
-
 
 def threadInit():	#Initialize threads
 	global t_collector
@@ -95,24 +91,19 @@ def threadInit():	#Initialize threads
 		t_collector.start()
 		#print('True Thread init')
 
-
 if __name__ == "__main__":
-
 
 	delta_st = int(1)
 	threadInit()
 	threadInit()
 
-
 	while infinite_loop == True:
 		t = time.time()
-
 
 		if not Signal.samples_FIFO.full():
 			#print(str(Signal.samples_FIFO.qsize()) +' < '+ str(Signal.FIFO_size))
 			#print('Thread init')
 			threadInit()  				# Initialize the data source required threads.
-
 
 		Signal.demod_signal = []		# Flush the previous iteration's demodulation
 		iteration_end = False       	# At the end of the main cycle's iteration this flag turns true if the desired number of iterations has been reached
@@ -122,22 +113,18 @@ if __name__ == "__main__":
 			#print(Signal.samples_FIFO.empty)
 			pass
 
-
 		#print('pré if : ' + str(Signal.samples_FIFO.qsize()))
 		#if not Signal.samples_FIFO.empty():   # Prevent fetching from a potentially empty FIFO
 
-		this_frame1 = Signal.samples_FIFO.get(True, 0.1)
+		this_frame = Signal.samples_FIFO.get(True, 0.1)
 		Signal.samples_FIFO.task_done()
-		#this_frame = this_frame1[2000:-1]
 
 		#offset = min(this_frame1[5000:])
 		#this_frame1 = [(x-offset) for x in this_frame1]
 
-		this_frame =  filterGen.bp_butter(this_frame1, [1, 3650], 2, Signal.sample_rate_adj)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "filterSim.py" script
+		this_frame =  filterGen.bp_butter(this_frame, [1, 3650], 2, Signal.sample_rate_adj)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "filterSim.py" script
 
 		this_frame = this_frame[45000:]
-
-
 
 		if Signal.decimation_factor > 1:
 			 this_frame = signal.decimate(this_frame, Signal.decimation_factor)					# Decimate if decimation order > 1.   Signal != signal, Signal is a class native to this project, while signal is an imported function library from the 3rd party Scipy library
@@ -161,38 +148,30 @@ if __name__ == "__main__":
 		if debug == True:
 			allsamples.extend(this_frame)           			# Keep storing samples for later dump if demod is activated
 
-
-
 ########################################################################
 ### INFORMATION PARSING
 ########################################################################
 
 		message_result, sucesses, preamble_detections = parseGen.binary_parse(Signal.demod_signal, Packet.preamble , Packet.packet_size , Packet.payload_size, Packet.STOP_bits)
 
-
 ########################################################################
 ### NETWORK INTEGRATION
 ########################################################################
 
-
 		fileGen.save_payload(message_result, debug, allsamples, Signal.demod_signal, Signal.samples_per_symbol)
-
 
 ########################################################################
 ### RPI GPIO UPDATING
 ########################################################################
 
-
 		temporal_window = (1/Signal.sample_rate)*Signal.frame_size
 		Signal.silence_time = 0.0152									# Time in seconds between start of consecutive packets,
-
 
 		success_ratio = sucesses / (temporal_window/Signal.silence_time)
 
 		#if USE_LEDS == True:
 
 			#gpioGen.update(success_ratio)
-
 
 ########################################################################
 ### VERBOSE
@@ -210,10 +189,7 @@ if __name__ == "__main__":
 		print('Debug value is ' + str(debug))
 		print('Loop value is ' + str(args['infi']))
 
-
-
 ########################################################################
-
 
 		iteration_counter += 1
 		if iteration_counter >= args['itnum']:
