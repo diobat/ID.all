@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 global debug, debug1, debug2
 
-debug = True 	# Should execution be halted at every step to generate graphs?
+debug = False 	# Should execution be halted at every step to generate graphs?
 debug1 = False 	# Should step by step timestamps be printed?
 debug2 = False	# Should a global timestamp be printed?
 

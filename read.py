@@ -2,6 +2,9 @@ import os
 import numpy as np
 
 
+
+#This script reads and prints in text format all the files in the ./outputs/ folder
+
 path = os.listdir("./outputs")
 
 print(path)

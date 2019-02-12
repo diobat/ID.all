@@ -1,6 +1,6 @@
 import queue			#FIFO/queue
 import simGen           #The ability to simulate a signal
-import rtlsdr			#SDR
+#import rtlsdr			#SDR
 import time				# measuring the harvest duration
 
 class Signal:
@@ -26,10 +26,10 @@ class Signal:
 		self.samples_FIFO = queue.Queue(FIFO_size)                                  # size 50 FIFO to store the samples between harvesting and comparating
 		self.harvest_delta = [] 													# variable init, time it takes to harvest the signal
 
-		self.SDR = rtlsdr.RtlSdr()
-		self.SDR.sample_rate = self.sample_rate									#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
-		self.SDR.center_freq = self.carrier_freq
-		self.SDR.gain = software_gain
+		#self.SDR = rtlsdr.RtlSdr()
+		#self.SDR.sample_rate = self.sample_rate									#These are default values, will be overriden in any case of user input, 'SoundGen -h' for help
+		#self.SDR.center_freq = self.carrier_freq
+		#self.SDR.gain = software_gain
 
 
 
@@ -48,7 +48,7 @@ class Signal:
 
 
 			q = time.time()
-			samples = abs(self.SDR.read_samples(self.frame_size))
+			#samples = abs(self.SDR.read_samples(self.frame_size))
 			self.samples_FIFO.put_nowait(samples) 									 ## Harvests samples and stores their ABSOLUTE VALUES into a FIFO
 			#print(self.samples_FIFO.qsize())
 			self.harvest_delta = round(time.time() - q, 3)

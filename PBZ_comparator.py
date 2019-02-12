@@ -2,7 +2,7 @@ import numpy as np
 import pylab
 import matplotlib.pyplot as plt
 
-debug = True		# Set to true to plot graphs
+debug = False		# Set to true to plot graphs
 
 def compare_signal(signal, samples_per_symbol):
 

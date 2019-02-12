@@ -38,6 +38,20 @@ Demodulating a signal with a 5kHz symbol rate riding on a 95MHz carrier wave is 
 
 The code repository can be found here_ .
 
+Required material
+-------------------
+
+For an alternative list on the required material please read chapter 5 on the annexed thesis
+
+1. Rasperry Pi (with Raspbian installed)
+
+2. SDR-RTL kit
+
+3. Three antennas designed for the same carrier Frequency
+
+4. 
+
+
 How to setup
 --------------
 
