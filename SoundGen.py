@@ -7,7 +7,6 @@
 	# Issues with numpy module? On terminal: pip3 install --upgrade --ignore-installed --install-option '--install-data=/usr/local' numpy
 
 from pylab import *   	#Graphical capabilities, network and debug outfiles
-
 #from rtlsdr import *	#SDR
 from scipy import signal #Signal Filtering
 import queue			#FIFO/queue
@@ -44,7 +43,7 @@ parser.add_argument('-cp', '--comp', help='Comparator (DEEP, PBZ, FAST). See doc
 args = vars(parser.parse_args())
 
 #args['freq'] will contain the value of arg '-f'
-#args['samp'] will contain the value of optional argument '-s' if any value was passed, otherwise revert to default
+#args['samp'] will contain the value of optional argument '-s' if any value was passed
 #etc
 
 print(args)
@@ -70,7 +69,13 @@ debug = args['dbug']									# Debug capabilities switch
 USE_LEDS = False
 heartbeat = True
 
-
+#GPIO.setwarnings(False)
+#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(3, GPIO.OUT)
+#GPIO.setup(5, GPIO.OUT)
+#GPIO.setup(7, GPIO.OUT)
+#GPIO.setup(11, GPIO.OUT)
+#GPIO.setup(13, GPIO.OUT)
 
 
 ## Debugging variables
@@ -81,18 +86,6 @@ allsamples = array.array('f',[0])
 ### FUNCTIONS
 ########################################################################
 
-
-def parityOf(int_type): # Check parity
-
-	x = 0
-	for bit in int_type:
-		x = (x << 1) | bit
-
-	parity = False
-	while (x):
-		parity = ~parity
-		x = x & (x - 1)
-	return(parity)
 
 
 def threadInit():	#Initialize threads
@@ -168,27 +161,18 @@ if __name__ == "__main__":
 		if debug == True:
 			allsamples.extend(this_frame)           			# Keep storing samples for later dump if demod is activated
 
-                if debug == True:
-                    allsamples.extend(this_frame)           # Keep storing samples for later dump if demod is activated
 
 
 ########################################################################
 ### INFORMATION PARSING
 ########################################################################
 
-
 		message_result, sucesses, preamble_detections = parseGen.binary_parse(Signal.demod_signal, Packet.preamble , Packet.packet_size , Packet.payload_size, Packet.STOP_bits)
 
 
-		# Count the number of sucesses
-
-        for x in range(len(end_result) - len(desired_result)):
-            if end_result[x:x+len(desired_result)] == desired_result:
-                sucesses += 1
-
-        for x in range(len(flipped_endresult) - len(desired_result)):
-            if flipped_endresult[x:x+len(desired_result)] == desired_result:
-                flipped_sucesses += 1
+########################################################################
+### NETWORK INTEGRATION
+########################################################################
 
 
 		fileGen.save_payload(message_result, debug, allsamples, Signal.demod_signal, Signal.samples_per_symbol)
@@ -227,9 +211,14 @@ if __name__ == "__main__":
 		print('Loop value is ' + str(args['infi']))
 
 
+
 ########################################################################
 
 
+		iteration_counter += 1
+		if iteration_counter >= args['itnum']:
+			infinite_loop = False
 
+		infinite_loop = args['infi'] 			# -i argument takes precedente over -it argument, thus is updated later, in order to overwrite.
 
-    sys.exit(main(sys.argv))
+	sys.exit(main(sys.argv))
