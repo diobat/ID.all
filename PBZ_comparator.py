@@ -2,7 +2,7 @@ import numpy as np
 import pylab
 import matplotlib.pyplot as plt
 
-debug = False		# Set to true to plot graphs
+debug = True		# Set to true to plot graphs
 
 def compare_signal(signal, samples_per_symbol):
 
@@ -31,7 +31,7 @@ def compare_signal(signal, samples_per_symbol):
 	allindexes = []
 	chosen_samples = []
 	for a in range(len(zero_crossings)-1):
-		index = zero_crossings[a] + round(samples_per_symbol*0.4)
+		index = zero_crossings[a] + round(samples_per_symbol*0.5)
 		while(index < (zero_crossings[a+1] - (samples_per_symbol*0.1))):
 			allindexes.append(index)
 			chosen_samples.append(signal_zero_centered[index])
@@ -46,11 +46,11 @@ def compare_signal(signal, samples_per_symbol):
 		#pylab.subplot(2,1,1)
 		pylab.plot(signal)
 		plt.axhline(y=threshold, color='k', linestyle='-')
-		plt.scatter(allindexes, signal_samples, color='orange')
+		plt.scatter(allindexes, signal_samples, color='red')
 		plt.scatter(zero_crossings, ts, color='black')
-		plt.title('Pass-by-zero Comparator', fontsize = 20)
-		plt.xlabel('Sample index')
-		plt.ylabel('Quantization level')
+		plt.title('Pass-by-Zero algorithm', fontsize = 24)
+		plt.xlabel('Sample index', fontsize=18)
+		plt.ylabel('Quantization level',fontsize=18)
 
 
 
@@ -58,6 +58,8 @@ def compare_signal(signal, samples_per_symbol):
 		#fft_signal = np.fft(signal)
 		#pylab.plot(fft_signal)
 		plt.legend(['Signal', 'Threshold', 'Chosen samples', 'Temporal synchronization Points'], loc = 1)
+		plt.ylim([0, 1.1])
+		plt.xlim([107300, 108700])
 		plt.show()
 
 

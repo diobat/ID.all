@@ -21,7 +21,6 @@ import time				#time deltas
 import argparse			#argumment management
 #import scipy.signal
 
-
 ########################################################################
 ### PARSING INPUT ARGUMENTS
 ########################################################################
@@ -57,7 +56,7 @@ print(args)
 Signal = classGen.Signal(args['genr'], args['freq'], args['samp'], args['gain'], args['sfram'], args['fifo'], args['symb'], 0.0152, args['dcim'])		# carrier_freq, sample_rate, software gain, frame_size, frames_per_iteration, symbol_rate, silence_time, decimation_factor, simulator_mode
 
 #Packet characteristics
-Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])				# preamble, payload_size, CRC_divisor, STOP bits
+Packet = classGen.Packet([1,0,1,0], 8, [1,0,1,0], [1])		# preamble, payload_size, CRC_divisor, STOP bits
 
 ## Flow control
 global iteration_counter, debug
@@ -94,8 +93,8 @@ def threadInit():	#Initialize threads
 if __name__ == "__main__":
 
 	delta_st = int(1)
-	threadInit()
-	threadInit()
+	#threadInit()
+	#threadInit()
 
 	while infinite_loop == True:
 		t = time.time()
@@ -122,7 +121,7 @@ if __name__ == "__main__":
 		#offset = min(this_frame1[5000:])
 		#this_frame1 = [(x-offset) for x in this_frame1]
 
-		this_frame =  filterGen.bp_butter(this_frame, [1, 3650], 2, Signal.sample_rate_adj)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "filterSim.py" script
+		this_frame = filterGen.bp_butter(this_frame, [1, 3650], 2, Signal.sample_rate_adj)	# Apply butterworth, 2nd order band pass filter. The filter order should be changed with care, a simulation can be run with the help of the "filterSim.py" script
 
 		this_frame = this_frame[45000:]
 

@@ -40,23 +40,31 @@ def genr_samples(Signal, Packet):
         #print(payloads[payload_index])
         #print(CRC)
 
-    noise = np.random.normal(0,0.2,len(fake_signal))
+    noise = np.random.normal(0,0.1,len(fake_signal))
     # args:
     # first is the mean of the normal distribution you are choosing from
     # second is the standard deviation of the normal distribution
     # third is the number of elements you get in array noise
 
-    #lt.subplot(211)
-    #plt.plot(fake_signal)
-
-
+    plt.subplot(211)
+    plt.plot(fake_signal)
+    plt.xlim(128000, 136000)
+    plt.title('Simulated signal')
+    plt.xlabel('Sample index')
+    plt.ylabel('Sample quantization')
 
     fake_signal += noise
 
 
 
-    #plt.subplot(212)
-    #plt.plot(fake_signal)
-    #plt.show()
+    plt.subplot(212)
+    plt.plot(fake_signal)
+    plt.xlim(128000, 136000)
+    plt.title('Simulated signal with added noise')
+    plt.xlabel('Sample index')
+    plt.ylabel('Sample quantization')
+
+
+    plt.show()
 
     return fake_signal[1:Signal.frame_size]

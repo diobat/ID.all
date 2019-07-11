@@ -5,16 +5,14 @@ import filterGen
 
 
 #samples = np.load("outfile_samples.npy")
-samples2 = np.load("PBZS_stage1.npy")
-pre_filter = np.load('pre_filter.npy')
+#samples2 = np.load("PBZS_stage1.npy")
+pre_filter = np.load('outfile_samples.npy')
 
 
+window = 65 * 30
 
-
-window = 65 * 120
-
-start = 201000
-start2 = 201000
+start = 204750
+start2 = 204750
 
 sample_rate = 226000
 symbol_rate = 3650
@@ -22,7 +20,7 @@ symbol_rate = 3650
 nyq_freq = sample_rate/2
 
 filter_order = 2
-low_cutoff = 10
+low_cutoff = 1
 high_cutoff = 3650
 
 post_filter = filterGen.bp_butter(pre_filter, [low_cutoff, high_cutoff], filter_order, sample_rate)
@@ -42,7 +40,25 @@ w, h = signal.freqz(b, a, worN = sample_rate)
 
 fig = plt.figure()
 
-fig.suptitle('Python filter simulator', fontsize=16)
+
+
+fig.suptitle('Python filter simulator', fontsize=24)
+
+
+SMALL_SIZE = 12
+MEDIUM_SIZE = 10
+BIGGER_SIZE = 16
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+
+
 
 ax1 = fig.add_subplot(221)
 plt.title('Bandpass over Power Spectral Density')
